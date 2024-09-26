@@ -6,7 +6,7 @@ import usePersistState from "./usePersistState";
 
 const chartSettings: ChartSettings = {
   marginLeft: 50,
-  marginRight: 50,
+  marginRight: 0,
 };
 
 export interface Point<T = number> {
@@ -16,7 +16,7 @@ export interface Point<T = number> {
 
 function scaleBound(input: number): number {
   const nZeros = Math.floor(Math.log10(input));
-  if (nZeros == 0) {
+  if (nZeros === 0) {
     return 10;
   }
 
@@ -59,7 +59,7 @@ function DataPoint({ point }: { point: Point }) {
   );
 }
 
-class ChartOptions {
+export class ChartOptions {
   scaleType: Point<"linear" | "log">;
   nTicks: Point<number>;
   drawLine: boolean;
@@ -71,15 +71,59 @@ class ChartOptions {
     this.drawLine = other?.drawLine ?? true;
     this.columns = other?.columns ?? { x: "index", y: "cost" };
   }
-
-  cloneWith(fn: (c: ChartOptions) => void): ChartOptions {
-    const copy = new ChartOptions(this);
-    fn(copy);
-    return copy;
-  }
 }
 
-function ChartControls({
+function ButtonGroup<T>({
+  options,
+  value,
+  onChange,
+}: {
+  options: T[];
+  value: T;
+  onChange: (v: T) => void;
+}) {
+  const rounded = (idx: number) => {
+    if (idx === 0) {
+      return "rounded-s-lg";
+    } else if (idx === options.length - 1) {
+      return "rounded-e-lg";
+    } else {
+      return "";
+    }
+  };
+
+  return (
+    <span className="inline-flex rounded-md shadow-sm">
+      {options.map((opt, idx) => (
+        <button
+          key={idx}
+          type="button"
+          className={[
+            "px-2",
+            "py-[0.75px]",
+            "text-sm",
+            "font-medium",
+            opt == value ? "text-gray-100" : "text-gray-900",
+            "border",
+            "border-gray-200",
+            rounded(idx),
+            "hover:bg-blue-500",
+            "hover:text-gray-100",
+            "hover:ring-1",
+            "hover:ring-blue-700",
+            "hover:z-10",
+            opt === value ? "bg-blue-500" : "bg-white",
+          ].join(" ")}
+          onClick={(_) => onChange(opt)}
+        >
+          {opt as string}
+        </button>
+      ))}
+    </span>
+  );
+}
+
+export function ChartControls({
   onChange,
   columnValues,
 }: {
@@ -92,73 +136,89 @@ function ChartControls({
   );
 
   return (
-    <div>
-      <div id="control-scaleType">
-        X Scale:
-        <select
-          onChange={(e) => {
-            const c = new ChartOptions(ctrls);
-            c.scaleType.x = e.target.value as "linear" | "log";
-            setCtrls(c);
-            onChange(c);
-          }}
-          value={ctrls.scaleType.x}
-        >
-          <option value="linear">Linear</option>
-          <option value="log">Log</option>
-        </select>
-        Y Scale:
-        <select
-          onChange={(e) => {
-            const c = new ChartOptions(ctrls);
-            c.scaleType.y = e.target.value as "linear" | "log";
-            setCtrls(c);
-            onChange(c);
-          }}
-          value={ctrls.scaleType.y}
-        >
-          <option value="linear">Linear</option>
-          <option value="log">Log</option>
-        </select>
+    <div className="space-y-2">
+      <div
+        id="control-scaleType"
+        className="bg-gray-200 rounded p-2 space-y-[0.5px]"
+      >
+        <div>Scales:</div>
+        <div className="space-x-2">
+          <span className="inline-block w-4">X:</span>
+          <ButtonGroup<"linear" | "log">
+            options={["linear", "log"]}
+            value={ctrls.scaleType.x}
+            onChange={(v) => {
+              const c = new ChartOptions(ctrls);
+              c.scaleType.x = v;
+              setCtrls(c);
+              onChange(c);
+            }}
+          />
+        </div>
+        <div className="space-x-2">
+          <span className="inline-block w-4">Y:</span>
+          <ButtonGroup<"linear" | "log">
+            options={["linear", "log"]}
+            value={ctrls.scaleType.y}
+            onChange={(v) => {
+              const c = new ChartOptions(ctrls);
+              c.scaleType.y = v;
+              setCtrls(c);
+              onChange(c);
+            }}
+          />
+        </div>
       </div>
-      <div id="control-columns">
-        X Column Type:
-        <select
-          onChange={(e) => {
-            const c = new ChartOptions(ctrls);
-            c.columns.x = e.target.value;
-            setCtrls(c);
-            onChange(c);
-          }}
-          value={ctrls.columns.x}
-        >
-          <option value="index">Index</option>
-          {columnValues.map((v) => (
-            <option key={`x-${v}`} value={v}>
-              {v}
-            </option>
-          ))}
-        </select>
-        Y Column Type:
-        <select
-          onChange={(e) => {
-            const c = new ChartOptions(ctrls);
-            c.columns.y = e.target.value;
-            setCtrls(c);
-            onChange(c);
-          }}
-          value={ctrls.columns.y}
-        >
-          <option value="index">Index</option>
-          {columnValues.map((v) => (
-            <option key={`y-${v}`} value={v}>
-              {v}
-            </option>
-          ))}
-        </select>
+
+      <div
+        id="control-columns"
+        className="bg-gray-200 rounded p-2 space-y-[0.5px]"
+      >
+        <div>Column Type:</div>
+        <div className="space-x-2">
+          <span className="inline-block w-4">X:</span>
+          <select
+            onChange={(e) => {
+              const c = new ChartOptions(ctrls);
+              c.columns.x = e.target.value;
+              setCtrls(c);
+              onChange(c);
+            }}
+            value={ctrls.columns.x}
+            className="rounded-lg px-2 py-[0.75px]"
+          >
+            <option value="index">Index</option>
+            {columnValues.map((v) => (
+              <option key={`x-${v}`} value={v}>
+                {v}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="space-x-2">
+          <span className="inline-block w-4">Y:</span>
+          <select
+            onChange={(e) => {
+              const c = new ChartOptions(ctrls);
+              c.columns.y = e.target.value;
+              setCtrls(c);
+              onChange(c);
+            }}
+            value={ctrls.columns.y}
+            className="rounded-lg px-2 py-[0.75px]"
+          >
+            <option value="index">Index</option>
+            {columnValues.map((v) => (
+              <option key={`y-${v}`} value={v}>
+                {v}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
-      <div id="control-drawLine">
-        Draw Line:
+
+      <div id="control-drawLine" className="bg-gray-200 rounded p-2 space-x-2">
+        <span>Draw Lines:</span>
         <button
           onClick={(_) => {
             const c = new ChartOptions(ctrls);
@@ -166,38 +226,40 @@ function ChartControls({
             setCtrls(c);
             onChange(c);
           }}
+          className={[
+            "rounded-lg",
+            "px-2",
+            "py-[0.75px]",
+            "hover:bg-blue-500",
+            "hover:text-gray-100",
+            "hover:ring-1",
+            "hover:ring-blue-700",
+            "hover:z-10",
+            ctrls.drawLine ? "bg-blue-500" : "bg-white",
+            ctrls.drawLine ? "text-gray-100" : "text-black",
+          ].join(" ")}
         >
-          {JSON.stringify(ctrls.drawLine)}
+          true
         </button>
       </div>
     </div>
   );
 }
 
-export function Chart({ tables }: { tables?: PivotTable[] }) {
+export function Chart({
+  tables,
+  ctrls,
+}: {
+  tables?: PivotTable[];
+  ctrls: ChartOptions;
+}) {
   const [ref, dms] = useChartDimensions(chartSettings);
-
-  const [ctrls, setCtrls] = usePersistState<ChartOptions>(
-    new ChartOptions(),
-    "chart-options",
-  );
 
   const lines: Point[][] = useMemo(
     () =>
       tables?.map((table) => points(table, ctrls.columns.x, ctrls.columns.y)) ??
       [],
     [tables, ctrls],
-  );
-
-  const columnValues: string[] = useMemo(
-    () =>
-      tables?.reduce((acc: string[] | null, val: PivotTable) => {
-        console.log(acc, val.value_names);
-        if (!acc) return val.value_names;
-
-        return setIntersect(acc, val.value_names);
-      }, null) ?? [],
-    [tables],
   );
 
   const [maxX, maxY] = useMemo(() => {
@@ -242,57 +304,48 @@ export function Chart({ tables }: { tables?: PivotTable[] }) {
   const colors = useMemo(() => d3.scaleOrdinal(d3.schemeAccent), []);
 
   return (
-    <>
-      <div ref={ref} style={{ height: "600px" }}>
-        <svg width={dms.width} height={dms.height}>
-          <g transform={`translate(${dms.marginLeft}, ${dms.marginTop})`}>
-            <rect
-              width={dms.boundedWidth}
-              height={dms.boundedHeight}
-              fill="lavender"
-            />
-            <YAxis scale={yScale} nTicks={5} />
-            <g transform={`translate(0, ${dms.boundedHeight})`}>
-              <XAxis scale={xScale} nTicks={ctrls.nTicks.y} />
-            </g>
-            <Grid
-              xScale={xScale}
-              yScale={yScale}
-              xNTicks={ctrls.nTicks.x}
-              yNTicks={ctrls.nTicks.y}
-              width={dms.boundedWidth}
-              height={dms.boundedHeight}
-            />
-            {lines?.map((child, idx) => (
-              <g key={idx}>
-                {ctrls.drawLine ? (
-                  <path
-                    fill="none"
-                    stroke={colors(`${idx}`)}
-                    strokeWidth={2.0}
-                    d={line(child) ?? undefined}
-                  />
-                ) : null}
-
-                {child.map((pt, ptidx) => (
-                  <DataPoint
-                    key={`${idx}-${ptidx}`}
-                    point={{ x: xScale(pt.x), y: yScale(pt.y) }}
-                  />
-                ))}
-              </g>
-            ))}
+    <div ref={ref} className="h-full">
+      <svg width="100%" height="100%">
+        <g transform={`translate(${dms.marginLeft}, ${dms.marginTop})`}>
+          <rect
+            width={dms.boundedWidth}
+            height={dms.boundedHeight}
+            fill="lavender"
+          />
+          <YAxis scale={yScale} nTicks={5} />
+          <g transform={`translate(0, ${dms.boundedHeight})`}>
+            <XAxis scale={xScale} nTicks={ctrls.nTicks.y} />
           </g>
-        </svg>
-      </div>
-      <ChartControls
-        columnValues={[...columnValues.values()]}
-        onChange={(controls) => {
-          console.log(controls);
-          setCtrls(controls);
-        }}
-      />
-    </>
+          <Grid
+            xScale={xScale}
+            yScale={yScale}
+            xNTicks={ctrls.nTicks.x}
+            yNTicks={ctrls.nTicks.y}
+            width={dms.boundedWidth}
+            height={dms.boundedHeight}
+          />
+          {lines?.map((child, idx) => (
+            <g key={idx}>
+              {ctrls.drawLine ? (
+                <path
+                  fill="none"
+                  stroke={colors(`${idx}`)}
+                  strokeWidth={2.0}
+                  d={line(child) ?? undefined}
+                />
+              ) : null}
+
+              {child.map((pt, ptidx) => (
+                <DataPoint
+                  key={`${idx}-${ptidx}`}
+                  point={{ x: xScale(pt.x), y: yScale(pt.y) }}
+                />
+              ))}
+            </g>
+          ))}
+        </g>
+      </svg>
+    </div>
   );
 }
 
@@ -304,7 +357,7 @@ function points(
   if (!table) return [];
 
   const sel = (col: string) => (row: any, idx: number) =>
-    col == "index" ? idx : +row[col];
+    col === "index" ? idx : +row[col];
 
   const xSel = sel(xCol);
   const ySel = sel(yCol);

@@ -48,9 +48,9 @@ export function useChartDimensions(
       if (!Array.isArray(entries)) return;
       if (!entries.length) return;
       const entry = entries[0];
-      if (entry && width != entry.contentRect.width)
+      if (entry && width !== entry.contentRect.width)
         setWidth(entry.contentRect.width);
-      if (entry && height != entry.contentRect.height)
+      if (entry && height !== entry.contentRect.height)
         setHeight(entry.contentRect.height);
     });
 
@@ -58,7 +58,7 @@ export function useChartDimensions(
       resizeObserver.observe(element);
       return () => resizeObserver.unobserve(element);
     }
-  }, []);
+  }, [width, height]);
 
   const newSettings = {
     ...dimensions,

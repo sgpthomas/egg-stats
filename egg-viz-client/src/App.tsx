@@ -1,4 +1,4 @@
-import { Chart } from "./Chart";
+import { Chart, ChartControls, ChartOptions } from "./Chart";
 import {
   QueryClient,
   QueryClientProvider,
@@ -6,9 +6,11 @@ import {
   useQuery,
   UseQueryResult,
 } from "@tanstack/react-query";
-import { PivotTable } from "./DataProcessing";
+import { PivotTable, setIntersect } from "./DataProcessing";
 import usePersistState, { createIDBPersister } from "./usePersistState";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { Sidebar } from "./Sidebar";
+import { useMemo, useState } from "react";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -112,16 +114,50 @@ function FileList({
   if (!data) return "Invalid data!";
 
   return (
-    <ul>
+    <ul className="space-y-2 font-medium">
       {data.paths.map(([id, path]) => (
         <li key={id}>
-          <label>
+          <label className="bg-gray-200 hover:bg-gray-300 p-2 rounded-lg inline-flex items-center w-full">
             <input
               type="checkbox"
               onChange={(_) => onSelect(id)}
               checked={selected.has(id)}
+              className="mr-2 sr-only peer"
             />
-            {path}
+            <div
+              className={[
+                "relative",
+                "w-9",
+                "h-5",
+                "bg-gray-300",
+                "peer-focus:outline-none",
+                "peer-focus:ring-2",
+                "peer-focus:ring-blue-300",
+                "dark:peer-focus:ring-blue-800",
+                "rounded-full",
+                "peer",
+                "dark:bg-gray-700",
+                "peer-checked:after:translate-x-full",
+                "rtl:peer-checked:after:-translate-x-full",
+                "peer-checked:after:border-white",
+                "after:content-['']",
+                "after:absolute",
+                "after:top-[2px]",
+                "after:start-[2px]",
+                "after:bg-white",
+                "after:border-gray-300",
+                "after:border",
+                "after:rounded-full",
+                "after:h-4",
+                "after:w-4",
+                "after:transition-all",
+                "dark:border-gray-600",
+                "peer-checked:bg-blue-600",
+              ].join(" ")}
+            ></div>
+            <span className="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">
+              {path}
+            </span>
           </label>
         </li>
       ))}
@@ -150,6 +186,8 @@ function FileContents({
               </ul>
             </div>
           );
+
+        return undefined;
       })}
     </div>
   );
@@ -197,7 +235,7 @@ function Home() {
       });
   }
 
-  const tables: UseQueryResult<PivotTable>[] = useQueries({
+  const tableQueries: UseQueryResult<PivotTable>[] = useQueries({
     queries: [...selected.values()].map((id) => {
       return {
         queryKey: ["download", id],
@@ -207,38 +245,76 @@ function Home() {
     }),
   });
 
+  const columnValues: string[] = useMemo(
+    () =>
+      tableQueries
+        ?.filter((t) => !!t.data)
+        .map((t) => t.data)
+        .reduce((acc: string[] | null, val: PivotTable) => {
+          if (!acc) return val.value_names;
+
+          return setIntersect(acc, val.value_names);
+        }, null) ?? [],
+    [tableQueries],
+  );
+
+  const [ctrls, setCtrls] = usePersistState<ChartOptions>(
+    new ChartOptions(),
+    "chart-options",
+  );
+
   return (
     <main>
-      <FileList
-        data={knownFiles}
-        selected={selected}
-        onSelect={(id) => {
-          if (selected.has(id)) {
-            selected.delete(id);
-          } else {
-            selected.add(id);
-          }
-          setSelected(new Set(selected));
-        }}
-      />
-      {
-        // <FileContents downloads={downloadQueries} />
-        // <div>
-        //   {tables?.map((table) => {
-        //     if (!table.data) return "loading";
-        //     return table.data.map((r, idx) =>
-        //       idx < 10 ? (
-        //         <div key={idx}>{[...Object.values(r)].join(", ")}</div>
-        //       ) : undefined,
-        //     );
-        //   })}
-        // </div>
-      }
-      <Chart
-        tables={tables
-          .filter((table) => !!table.data)
-          .map((table) => table.data)}
-      />
+      <div className="flex">
+        <Sidebar>
+          <div className="flex flex-col h-full">
+            <div className="grow">
+              <FileList
+                data={knownFiles}
+                selected={selected}
+                onSelect={(id) => {
+                  if (selected.has(id)) {
+                    selected.delete(id);
+                  } else {
+                    selected.add(id);
+                  }
+                  setSelected(new Set(selected));
+                }}
+              />
+            </div>
+            <div>
+              <ChartControls
+                columnValues={[...columnValues.values()]}
+                onChange={(controls) => {
+                  console.log(controls);
+                  setCtrls(controls);
+                }}
+              />
+            </div>
+          </div>
+        </Sidebar>
+        {
+          // <FileContents downloads={downloadQueries} />
+          // <div>
+          //   {tables?.map((table) => {
+          //     if (!table.data) return "loading";
+          //     return table.data.map((r, idx) =>
+          //       idx < 10 ? (
+          //         <div key={idx}>{[...Object.values(r)].join(", ")}</div>
+          //       ) : undefined,
+          //     );
+          //   })}
+          // </div>
+        }
+        <div className="p-2 grow">
+          <Chart
+            tables={tableQueries
+              .filter((table) => !!table.data)
+              .map((table) => table.data)}
+            ctrls={ctrls}
+          />
+        </div>
+      </div>
     </main>
   );
 }
