@@ -1,0 +1,12 @@
+[package]
+name = "egg-stats"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+members = [
+    "egg-viz-server",
+]
+
+[dependencies]
+egg = "0.9.5"
