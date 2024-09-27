@@ -451,7 +451,7 @@ export function Chart({
                       },
                       content: (
                         <>
-                          x: {pt.x} y: {pt.y}
+                          x: {pt.x.toFixed(2)} y: {pt.y.toFixed(2)}
                         </>
                       ),
                     });
