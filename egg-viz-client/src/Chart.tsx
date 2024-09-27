@@ -141,7 +141,7 @@ export function ChartControls({
         id="control-scaleType"
         className="bg-gray-200 rounded p-2 space-y-[0.5px]"
       >
-        <div>Scales:</div>
+        <div className="font-bold">Scales:</div>
         <div className="space-x-2">
           <span className="inline-block w-4">X:</span>
           <ButtonGroup<"linear" | "log">
@@ -174,7 +174,7 @@ export function ChartControls({
         id="control-columns"
         className="bg-gray-200 rounded p-2 space-y-[0.5px]"
       >
-        <div>Column Type:</div>
+        <div className="font-bold">Column Types:</div>
         <div className="space-x-2">
           <span className="inline-block w-4">X:</span>
           <select
@@ -218,7 +218,7 @@ export function ChartControls({
       </div>
 
       <div id="control-drawLine" className="bg-gray-200 rounded p-2 space-x-2">
-        <span>Draw Lines:</span>
+        <span className="font-bold">Draw Lines:</span>
         <button
           onClick={(_) => {
             const c = new ChartOptions(ctrls);
@@ -304,26 +304,27 @@ export function Chart({
   const colors = useMemo(() => d3.scaleOrdinal(d3.schemeAccent), []);
 
   return (
-    <div ref={ref} className="h-full">
+    <div
+      ref={ref}
+      className={["h-full", "transition-transform", "-translate-x-0"].join(" ")}
+    >
       <svg width="100%" height="100%">
+        <rect width={dms.width} height={dms.height} fill="#E5E7EB" />
+        <Grid
+          xScale={xScale}
+          yScale={yScale}
+          xNTicks={ctrls.nTicks.x}
+          yNTicks={ctrls.nTicks.y}
+          width={dms.width}
+          height={dms.height}
+          xOffset={dms.marginLeft}
+          yOffset={dms.marginRight}
+        />
         <g transform={`translate(${dms.marginLeft}, ${dms.marginTop})`}>
-          <rect
-            width={dms.boundedWidth}
-            height={dms.boundedHeight}
-            fill="lavender"
-          />
           <YAxis scale={yScale} nTicks={5} />
           <g transform={`translate(0, ${dms.boundedHeight})`}>
             <XAxis scale={xScale} nTicks={ctrls.nTicks.y} />
           </g>
-          <Grid
-            xScale={xScale}
-            yScale={yScale}
-            xNTicks={ctrls.nTicks.x}
-            yNTicks={ctrls.nTicks.y}
-            width={dms.boundedWidth}
-            height={dms.boundedHeight}
-          />
           {lines?.map((child, idx) => (
             <g key={idx}>
               {ctrls.drawLine ? (
@@ -464,6 +465,8 @@ export function Grid({
   yScale,
   width,
   height,
+  xOffset,
+  yOffset,
   xNTicks,
   yNTicks,
   stroke = "lightGray",
@@ -472,6 +475,8 @@ export function Grid({
   yScale: d3Scale;
   width: number;
   height: number;
+  xOffset: number;
+  yOffset: number;
   xNTicks?: number;
   yNTicks?: number;
   stroke?: string;
@@ -489,8 +494,8 @@ export function Grid({
       {xTicks.map((offset, idx) => (
         <line
           key={`x-${idx}`}
-          x1={offset}
-          x2={offset}
+          x1={offset + xOffset}
+          x2={offset + xOffset}
           y1={0}
           y2={height}
           stroke={stroke}
@@ -502,8 +507,8 @@ export function Grid({
           key={`y-${idx}`}
           x1={0}
           x2={width}
-          y1={offset}
-          y2={offset}
+          y1={offset + yOffset}
+          y2={offset + yOffset}
           stroke={stroke}
         />
       ))}

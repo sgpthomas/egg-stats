@@ -105,10 +105,12 @@ function byKey<T, U>(keyFn: (x: T) => U): (a: T, b: T) => 1 | 0 | -1 {
 function FileList({
   data,
   onSelect,
+  open,
   selected,
 }: {
   data?: AvailableResponse;
   onSelect: (id: number) => void;
+  open: boolean;
   selected: Set<number>;
 }) {
   if (!data) return "Invalid data!";
@@ -117,7 +119,17 @@ function FileList({
     <ul className="space-y-2 font-medium">
       {data.paths.map(([id, path]) => (
         <li key={id}>
-          <label className="bg-gray-200 hover:bg-gray-300 p-2 rounded-lg inline-flex items-center w-full">
+          <label
+            className={[
+              "bg-gray-200",
+              "hover:bg-gray-300",
+              "p-2",
+              "rounded-lg",
+              "flex",
+              "items-center",
+              "w-full",
+            ].join(" ")}
+          >
             <input
               type="checkbox"
               onChange={(_) => onSelect(id)}
@@ -128,18 +140,18 @@ function FileList({
               className={[
                 "relative",
                 "w-9",
+                "min-w-9",
                 "h-5",
                 "bg-gray-300",
                 "peer-focus:outline-none",
                 "peer-focus:ring-2",
                 "peer-focus:ring-blue-300",
-                "dark:peer-focus:ring-blue-800",
                 "rounded-full",
                 "peer",
-                "dark:bg-gray-700",
                 "peer-checked:after:translate-x-full",
-                "rtl:peer-checked:after:-translate-x-full",
                 "peer-checked:after:border-white",
+                "peer-checked:bg-blue-600",
+                "rtl:peer-checked:after:-translate-x-full",
                 "after:content-['']",
                 "after:absolute",
                 "after:top-[2px]",
@@ -151,13 +163,13 @@ function FileList({
                 "after:h-4",
                 "after:w-4",
                 "after:transition-all",
-                "dark:border-gray-600",
-                "peer-checked:bg-blue-600",
               ].join(" ")}
             ></div>
-            <span className="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">
-              {path}
-            </span>
+            {open ? (
+              <span className="ms-3 text-sm font-medium text-gray-900 truncate">
+                {path}
+              </span>
+            ) : undefined}
           </label>
         </li>
       ))}
@@ -263,26 +275,29 @@ function Home() {
     "chart-options",
   );
 
+  const [open, setOpen] = usePersistState<boolean>(true, "app-sidebar-state");
+
   return (
     <main>
-      <div className="flex">
-        <Sidebar>
-          <div className="flex flex-col h-full">
-            <div className="grow">
-              <FileList
-                data={knownFiles}
-                selected={selected}
-                onSelect={(id) => {
-                  if (selected.has(id)) {
-                    selected.delete(id);
-                  } else {
-                    selected.add(id);
-                  }
-                  setSelected(new Set(selected));
-                }}
-              />
-            </div>
-            <div>
+      <div className="flex flex-row">
+        <Sidebar onChange={(o) => setOpen(o)}>
+          <div className="grow">
+            <FileList
+              data={knownFiles}
+              selected={selected}
+              open={open}
+              onSelect={(id) => {
+                if (selected.has(id)) {
+                  selected.delete(id);
+                } else {
+                  selected.add(id);
+                }
+                setSelected(new Set(selected));
+              }}
+            />
+          </div>
+          <div>
+            {open ? (
               <ChartControls
                 columnValues={[...columnValues.values()]}
                 onChange={(controls) => {
@@ -290,7 +305,7 @@ function Home() {
                   setCtrls(controls);
                 }}
               />
-            </div>
+            ) : undefined}
           </div>
         </Sidebar>
         {
@@ -306,7 +321,7 @@ function Home() {
           //   })}
           // </div>
         }
-        <div className="p-2 grow">
+        <div className="grow">
           <Chart
             tables={tableQueries
               .filter((table) => !!table.data)
