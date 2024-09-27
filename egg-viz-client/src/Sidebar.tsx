@@ -26,8 +26,7 @@ export function Sidebar(props: PropsWithChildren<Props>) {
           "px-3",
           "py-4",
           "overflow-y-auto",
-          "bg-gray-50",
-          "dark:bg-gray-800",
+          "bg-egg-200",
           "drop-shadow-md",
           "sm:px-3",
           "sm:py-4",
@@ -37,13 +36,12 @@ export function Sidebar(props: PropsWithChildren<Props>) {
       >
         <button
           className={[
-            "font-bold",
-            "bg-gray-200",
-            open ? "bg-blue-200" : "bg-gray-200",
+            "bg-egg-300",
+            "hover:bg-egg-400",
             "mb-2",
             "rounded-lg",
             "p-2",
-            "self-start",
+            "self-end",
           ].join(" ")}
           onMouseDown={(_e) => {
             if (props.onChange) props.onChange(!open);

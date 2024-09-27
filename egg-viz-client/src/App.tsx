@@ -121,8 +121,8 @@ function FileList({
         <li key={id}>
           <label
             className={[
-              "bg-gray-200",
-              "hover:bg-gray-300",
+              "bg-egg-300",
+              "hover:bg-egg-400",
               "p-2",
               "rounded-lg",
               "flex",
@@ -142,22 +142,22 @@ function FileList({
                 "w-9",
                 "min-w-9",
                 "h-5",
-                "bg-gray-300",
+                "bg-egg-200",
                 "peer-focus:outline-none",
                 "peer-focus:ring-2",
-                "peer-focus:ring-blue-300",
+                "peer-focus:ring-eggshell-300",
                 "rounded-full",
                 "peer",
                 "peer-checked:after:translate-x-full",
                 "peer-checked:after:border-white",
-                "peer-checked:bg-blue-600",
+                "peer-checked:bg-eggshell-active",
                 "rtl:peer-checked:after:-translate-x-full",
                 "after:content-['']",
                 "after:absolute",
                 "after:top-[2px]",
                 "after:start-[2px]",
                 "after:bg-white",
-                "after:border-gray-300",
+                "after:border-egg-300",
                 "after:border",
                 "after:rounded-full",
                 "after:h-4",
@@ -297,15 +297,14 @@ function Home() {
             />
           </div>
           <div>
-            {open ? (
-              <ChartControls
-                columnValues={[...columnValues.values()]}
-                onChange={(controls) => {
-                  console.log(controls);
-                  setCtrls(controls);
-                }}
-              />
-            ) : undefined}
+            <ChartControls
+              columnValues={[...columnValues.values()]}
+              onChange={(controls) => {
+                console.log(controls);
+                setCtrls(controls);
+              }}
+              open={open}
+            />
           </div>
         </Sidebar>
         {
