@@ -1,7 +1,6 @@
-import { Chart, ChartControls, ChartOptions } from "./Chart";
+import { Chart } from "./Chart";
 import {
   QueryClient,
-  QueryClientProvider,
   useQueries,
   useQuery,
   UseQueryResult,
@@ -10,7 +9,9 @@ import { PivotTable, setIntersect } from "./DataProcessing";
 import usePersistState, { createIDBPersister } from "./usePersistState";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { Sidebar } from "./Sidebar";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { ChartControls, ChartOptions } from "./ChartControls";
+import * as d3 from "d3";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -107,11 +108,13 @@ function FileList({
   onSelect,
   open,
   selected,
+  colors = d3.schemeAccent,
 }: {
   data?: AvailableResponse;
   onSelect: (id: number) => void;
   open: boolean;
   selected: Set<number>;
+  colors?: readonly string[];
 }) {
   if (!data) return "Invalid data!";
 
@@ -137,6 +140,7 @@ function FileList({
               className="mr-2 sr-only peer"
             />
             <div
+              style={{ background: selected.has(id) ? colors[id] : undefined }}
               className={[
                 "relative",
                 "w-9",
@@ -241,7 +245,12 @@ function Home() {
       .then(throwResponseError)
       .then((res) => res.json())
       .then((data: DownloadResponse) => {
-        const table = new PivotTable(["id", "iteration", "rule", "when"]);
+        const table = new PivotTable(file_id, [
+          "id",
+          "iteration",
+          "rule",
+          "when",
+        ]);
         PivotTable.addRows(table, data.rows);
         return table;
       });

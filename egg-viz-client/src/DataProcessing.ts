@@ -44,6 +44,8 @@ export function setIntersect<T>(set0: T[], set1: T[]): T[] {
 }
 
 export class PivotTable {
+  file_id: number;
+
   keyed_rows: [Key, any][];
   value_names: string[];
 
@@ -51,7 +53,8 @@ export class PivotTable {
   name: string;
   value: string;
 
-  constructor(keys: string[], name?: string, value?: string) {
+  constructor(file_id: number, keys: string[], name?: string, value?: string) {
+    this.file_id = file_id;
     this.keyed_rows = [];
     this.value_names = [];
     this.keys = keys;
