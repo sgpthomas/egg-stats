@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@floating-ui/react": "^0.26.24",
     "@headlessui/react": "^2.1.8",
     "@juggle/resize-observer": "^3.4.0",
     "@tanstack/query-sync-storage-persister": "^5.56.2",

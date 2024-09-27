@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
+import { ReactElement, useMemo, MouseEvent, useState } from "react";
 import { ChartSettings, useChartDimensions } from "./useChartDimensions";
 import * as d3 from "d3";
 import { PivotTable } from "./DataProcessing";
 import usePersistState from "./usePersistState";
 import { FaGear } from "react-icons/fa6";
 import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
+import { flip, offset, shift, useFloating } from "@floating-ui/react";
 
 const chartSettings: ChartSettings = {
   marginLeft: 50,
@@ -45,8 +46,17 @@ function lowerBound(typ: "linear" | "log"): number {
   }
 }
 
-function DataPoint({ point }: { point: Point }) {
-  let [rad, setRad] = useState(2.0);
+function DataPoint({
+  point,
+  fill = "currentColor",
+  onHover = (_e, _b) => {},
+}: {
+  point: Point;
+  fill?: string;
+  onHover?: (e: MouseEvent, active: boolean) => void;
+}) {
+  let [smR, lgR] = [2.5, 4.0];
+  let [rad, setRad] = useState(smR);
 
   if (isNaN(point.x) || isNaN(point.y)) return;
 
@@ -55,8 +65,17 @@ function DataPoint({ point }: { point: Point }) {
       cx={point.x}
       cy={point.y}
       r={rad}
-      onMouseOver={(_) => setRad(4.0)}
-      onMouseOut={(_) => setRad(2.0)}
+      fill={fill}
+      stroke="black"
+      onMouseOver={(e) => {
+        setRad(lgR);
+        onHover(e, true);
+      }}
+      onMouseOut={(e) => {
+        setRad(smR);
+        // setTooltip(undefined);
+        onHover(e, false);
+      }}
     />
   );
 }
@@ -278,6 +297,45 @@ export function ChartControls({
   );
 }
 
+interface Tooltip {
+  pos: Point;
+  content: ReactElement;
+}
+
+function useTooltip() {
+  const [tooltip, setTooltip] = useState<Tooltip | undefined>(undefined);
+  const { refs, floatingStyles } = useFloating({
+    placement: "top",
+    middleware: [offset(5), flip(), shift()],
+  });
+
+  return {
+    floatingRef: refs.setFloating,
+    floatingStyles: floatingStyles,
+    pos: tooltip?.pos,
+    content: tooltip?.content,
+    visibility: (!!tooltip ? "visible" : "hidden") as "visible" | "hidden",
+    set: (tt: Tooltip | undefined) => {
+      setTooltip(tt);
+      if (!tt) return;
+      refs.setPositionReference({
+        getBoundingClientRect() {
+          return {
+            width: 2,
+            height: 4,
+            x: tt.pos.x,
+            y: tt.pos.y,
+            top: tt.pos.y,
+            left: tt.pos.x,
+            right: tt.pos.x,
+            bottom: tt.pos.y,
+          };
+        },
+      });
+    },
+  };
+}
+
 export function Chart({
   tables,
   ctrls,
@@ -335,11 +393,17 @@ export function Chart({
 
   const colors = useMemo(() => d3.scaleOrdinal(d3.schemeAccent), []);
 
+  const tooltip = useTooltip();
+
   return (
-    <div
-      ref={ref}
-      className={["h-full", "transition-transform", "-translate-x-0"].join(" ")}
-    >
+    <div ref={ref} className="h-full">
+      <div
+        ref={tooltip.floatingRef}
+        style={{ ...tooltip.floatingStyles, visibility: tooltip.visibility }}
+        className="fixed block bg-white rounded-md border-[1px] border-egg-900 drop-shadow-lg px-1"
+      >
+        {tooltip.content}
+      </div>
       <svg width="100%" height="100%">
         <rect width={dms.width} height={dms.height} fill="#FFEFD5" />
         <Grid
@@ -372,7 +436,26 @@ export function Chart({
               {child.map((pt, ptidx) => (
                 <DataPoint
                   key={`${idx}-${ptidx}`}
+                  fill={colors(`${idx}`)}
                   point={{ x: xScale(pt.x), y: yScale(pt.y) }}
+                  onHover={(e, h) => {
+                    if (!h) {
+                      tooltip.set(undefined);
+                      return;
+                    }
+
+                    tooltip.set({
+                      pos: {
+                        x: e.clientX,
+                        y: e.clientY,
+                      },
+                      content: (
+                        <>
+                          x: {pt.x} y: {pt.y}
+                        </>
+                      ),
+                    });
+                  }}
                 />
               ))}
             </g>
