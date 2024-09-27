@@ -1,4 +1,4 @@
-use std::{path::Path, sync::Arc};
+use std::path::Path;
 
 use futures::FutureExt;
 
@@ -15,12 +15,11 @@ use warp::{
 pub async fn handler(
     file_id: usize,
     ws: warp::ws::Ws,
-    known_files: Arc<KnownFiles>,
+    known_files: KnownFiles,
 ) -> Result<impl Reply, Rejection> {
     let path = known_files
-        .paths
-        .get(file_id)
-        .ok_or(reject::not_found())?
+        .get_path(file_id)
+        .map_err(|_| reject::not_found())?
         .clone();
 
     Ok(ws.on_upgrade(|x| async {

@@ -141,7 +141,7 @@ export function Chart({
   );
 
   const [maxX, maxY] = useMemo(() => {
-    if (!lines) return [100, 100];
+    if (lines.length === 0) return [99, 99];
     const maxX = Math.max(
       ...lines.map(([_, line]) => d3.max(line, (pt) => pt.x) ?? 100),
     );
@@ -180,6 +180,8 @@ export function Chart({
   );
 
   const tooltip = useTooltip();
+
+  console.log(maxX, maxY, lines);
 
   return (
     <div ref={ref} className="h-full">

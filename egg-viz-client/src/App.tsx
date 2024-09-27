@@ -1,6 +1,8 @@
 import { Chart } from "./Chart";
+import { FileList } from "./FileList";
 import {
   QueryClient,
+  QueryClientProvider,
   useQueries,
   useQuery,
   UseQueryResult,
@@ -11,7 +13,6 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { Sidebar } from "./Sidebar";
 import { useMemo } from "react";
 import { ChartControls, ChartOptions } from "./ChartControls";
-import * as d3 from "d3";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -82,7 +83,7 @@ interface Row {
 //   }
 // }
 
-interface AvailableResponse {
+export interface AvailableResponse {
   paths: [number, string][];
 }
 
@@ -101,84 +102,6 @@ function byKey<T, U>(keyFn: (x: T) => U): (a: T, b: T) => 1 | 0 | -1 {
       return 0;
     }
   };
-}
-
-function FileList({
-  data,
-  onSelect,
-  open,
-  selected,
-  colors = d3.schemeAccent,
-}: {
-  data?: AvailableResponse;
-  onSelect: (id: number) => void;
-  open: boolean;
-  selected: Set<number>;
-  colors?: readonly string[];
-}) {
-  if (!data) return "Invalid data!";
-
-  return (
-    <ul className="space-y-2 font-medium">
-      {data.paths.map(([id, path]) => (
-        <li key={id}>
-          <label
-            className={[
-              "bg-egg-300",
-              "hover:bg-egg-400",
-              "p-2",
-              "rounded-lg",
-              "flex",
-              "items-center",
-              "w-full",
-            ].join(" ")}
-          >
-            <input
-              type="checkbox"
-              onChange={(_) => onSelect(id)}
-              checked={selected.has(id)}
-              className="mr-2 sr-only peer"
-            />
-            <div
-              style={{ background: selected.has(id) ? colors[id] : undefined }}
-              className={[
-                "relative",
-                "w-9",
-                "min-w-9",
-                "h-5",
-                "bg-egg-200",
-                "peer-focus:outline-none",
-                "peer-focus:ring-2",
-                "peer-focus:ring-eggshell-300",
-                "rounded-full",
-                "peer",
-                "peer-checked:after:translate-x-full",
-                "peer-checked:after:border-white",
-                "peer-checked:bg-eggshell-active",
-                "rtl:peer-checked:after:-translate-x-full",
-                "after:content-['']",
-                "after:absolute",
-                "after:top-[2px]",
-                "after:start-[2px]",
-                "after:bg-white",
-                "after:border-egg-300",
-                "after:border",
-                "after:rounded-full",
-                "after:h-4",
-                "after:w-4",
-                "after:transition-all",
-              ].join(" ")}
-            ></div>
-            {open ? (
-              <span className="ms-3 text-sm font-medium text-gray-900 truncate">
-                {path}
-              </span>
-            ) : undefined}
-          </label>
-        </li>
-      ))}
-    </ul>
-  );
 }
 
 function FileContents({
@@ -346,16 +269,16 @@ export default function App() {
   return (
     <>
       {
-        // <QueryClientProvider client={queryClient}>
+        // <PersistQueryClientProvider
+        //   client={queryClient}
+        //   persistOptions={{ persister, buster: "e" }}
+        // >
         //   <Home />
-        // </QueryClientProvider>
+        // </PersistQueryClientProvider>
       }
-      <PersistQueryClientProvider
-        client={queryClient}
-        persistOptions={{ persister, buster: "e" }}
-      >
+      <QueryClientProvider client={queryClient}>
         <Home />
-      </PersistQueryClientProvider>
+      </QueryClientProvider>
     </>
   );
 }

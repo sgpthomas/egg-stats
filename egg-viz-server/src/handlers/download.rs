@@ -3,7 +3,7 @@ use warp::{
     reply::{json, Reply},
 };
 
-use std::{path::PathBuf, sync::Arc};
+use std::path::PathBuf;
 
 use crate::{watcher::Row, KnownFiles};
 
@@ -15,15 +15,14 @@ pub struct FileResponse {
 
 pub async fn handler(
     file_id: usize,
-    known_files: Arc<KnownFiles>,
+    known_files: KnownFiles,
     root: PathBuf,
 ) -> Result<impl Reply, Rejection> {
     println!("request to download {file_id}");
 
     let path = known_files
-        .paths
-        .get(file_id)
-        .ok_or(reject::not_found())?
+        .get_path(file_id)
+        .map_err(|_| reject::not_found())?
         .clone();
 
     println!("  found {path:?}");

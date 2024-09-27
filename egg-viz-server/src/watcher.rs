@@ -1,6 +1,5 @@
 use futures::SinkExt;
 use notify::{Config, RecursiveMode, Watcher};
-use std::collections::HashMap;
 use std::ffi::OsStr;
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};

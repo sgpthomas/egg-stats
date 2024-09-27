@@ -2,33 +2,97 @@ mod cli;
 mod handlers;
 mod watcher;
 
+use anyhow::anyhow;
 use std::{
+    collections::{HashMap, HashSet},
     convert::Infallible,
     ffi::OsStr,
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{Arc, RwLock},
 };
 
 use handlers::{available, download, ws};
-use walkdir::WalkDir;
+use walkdir::{DirEntry, WalkDir};
 use warp::Filter;
 
+trait HasExtension {
+    fn has_extension(&self, extension: impl AsRef<str>) -> bool;
+}
+
+impl HasExtension for DirEntry {
+    fn has_extension(&self, extension: impl AsRef<str>) -> bool {
+        self.path().extension().and_then(OsStr::to_str) == Some(extension.as_ref())
+    }
+}
+
+#[derive(Clone)]
 pub struct KnownFiles {
-    paths: Vec<PathBuf>,
+    root: Arc<PathBuf>,
+    excluded: Arc<Vec<String>>,
+    counter: Arc<RwLock<usize>>,
+    paths: Arc<RwLock<HashMap<PathBuf, (bool, usize)>>>,
 }
 
 impl KnownFiles {
-    fn generate(root: impl AsRef<Path>) -> Self {
+    fn new(p: impl AsRef<Path>, excluded: &[String]) -> Self {
         KnownFiles {
-            paths: WalkDir::new(root.as_ref())
-                .into_iter()
-                .flatten()
-                .filter(|entry| entry.file_type().is_file())
-                .filter(|entry| entry.path().extension().and_then(OsStr::to_str) == Some("csv"))
-                .map(|entry| entry.into_path())
-                .flat_map(|path| path.strip_prefix(root.as_ref()).map(|p| p.to_path_buf()))
-                .collect::<Vec<_>>(),
+            root: Arc::new(p.as_ref().to_path_buf()),
+            excluded: Arc::new(excluded.to_vec()),
+            counter: Arc::new(RwLock::new(0)),
+            paths: Arc::default(),
         }
+    }
+
+    fn generate(&self) -> anyhow::Result<()> {
+        let mut counter = self.counter.write().map_err(|e| anyhow!("{e}"))?;
+        let mut paths = self.paths.write().map_err(|e| anyhow!("{e}"))?;
+
+        // find all csv paths under `&self.root`
+        let csv_paths: HashSet<_> = WalkDir::new(&*self.root)
+            .into_iter()
+            .flatten()
+            .filter(|entry| entry.file_type().is_file())
+            .filter(|entry| entry.has_extension("csv"))
+            .filter(|entry| {
+                !self
+                    .excluded
+                    .iter()
+                    .any(|excl| entry.path().ends_with(excl))
+            })
+            .map(|entry| entry.into_path())
+            .flat_map(|path| path.strip_prefix(&*self.root).map(|p| p.to_path_buf()))
+            .collect();
+
+        // check all the paths that we know, updating whether they are present
+        for (path, (present, _id)) in paths.iter_mut() {
+            *present = csv_paths.contains(path);
+        }
+
+        // add all new files
+        for csv_path in csv_paths {
+            paths.entry(csv_path).or_insert_with(|| {
+                let res = (true, *counter);
+                *counter += 1;
+                res
+            });
+        }
+
+        Ok(())
+    }
+
+    fn get_path(&self, file_id: usize) -> anyhow::Result<PathBuf> {
+        self.paths
+            .read()
+            .map_err(|e| anyhow!("{e}"))?
+            .iter()
+            .find_map(|(path, (pres, id))| {
+                if *pres && file_id == *id {
+                    Some(path.clone())
+                } else {
+                    None
+                }
+            })
+            .ok_or(anyhow!("{file_id} does not correspond to a known file"))
     }
 }
 
@@ -36,7 +100,7 @@ impl KnownFiles {
 async fn main() {
     let args = cli::cli();
 
-    let known_files = Arc::new(KnownFiles::generate(&args.input));
+    let known_files = KnownFiles::new(&args.input, &args.exclude);
 
     let available = warp::path("available")
         .and(with_known_files(known_files.clone()))
@@ -66,7 +130,7 @@ fn with_root(args: cli::Args) -> impl Filter<Extract = (PathBuf,), Error = Infal
 }
 
 fn with_known_files(
-    known_files: Arc<KnownFiles>,
-) -> impl Filter<Extract = (Arc<KnownFiles>,), Error = Infallible> + Clone {
+    known_files: KnownFiles,
+) -> impl Filter<Extract = (KnownFiles,), Error = Infallible> + Clone {
     warp::any().map(move || known_files.clone())
 }
