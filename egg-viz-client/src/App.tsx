@@ -211,7 +211,7 @@ function Home() {
 
   return (
     <main>
-      <div className="flex flex-row">
+      <div className="">
         <Sidebar onChange={(o) => setOpen(o)}>
           <div className="grow">
             <FileList
@@ -252,8 +252,9 @@ function Home() {
           //   })}
           // </div>
         }
-        <div className="grow">
+        <div className="h-screen w-screen fixed">
           <Chart
+            marginLeft={open ? 320 : 150}
             tables={tableQueries
               .filter((table) => !!table.data)
               .map((table) => table.data)}

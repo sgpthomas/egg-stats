@@ -7,11 +7,6 @@ import { XAxis, YAxis } from "./Axis";
 import { Grid } from "./Grid";
 import { ChartOptions } from "./ChartControls";
 
-const chartSettings: ChartSettings = {
-  marginLeft: 50,
-  marginRight: 0,
-};
-
 export interface Point<T = number> {
   x: T;
   y: T;
@@ -121,13 +116,20 @@ function DataPoint({
 export function Chart({
   tables,
   ctrls,
+  marginLeft,
   colors = d3.schemeAccent,
 }: {
   tables?: PivotTable[];
   ctrls: ChartOptions;
+  marginLeft: number;
   colors?: readonly string[];
 }) {
   // const colors = useMemo(() => d3.scaleOrdinal(d3.schemeAccent), []);
+
+  const chartSettings: ChartSettings = {
+    marginLeft: marginLeft,
+    marginRight: 0,
+  };
 
   const [ref, dms] = useChartDimensions(chartSettings);
 
@@ -181,10 +183,8 @@ export function Chart({
 
   const tooltip = useTooltip();
 
-  console.log(maxX, maxY, lines);
-
   return (
-    <div ref={ref} className="h-full">
+    <div ref={ref} className="h-screen bg-egg">
       <div
         ref={tooltip.floatingRef}
         style={{ ...tooltip.floatingStyles, visibility: tooltip.visibility }}
@@ -193,7 +193,6 @@ export function Chart({
         {tooltip.content}
       </div>
       <svg width="100%" height="100%">
-        <rect width={dms.width} height={dms.height} fill="#FFEFD5" />
         <Grid
           xScale={xScale}
           yScale={yScale}

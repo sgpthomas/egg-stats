@@ -1,7 +1,13 @@
-import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
 import { Point } from "./Chart";
 import usePersistState from "./usePersistState";
 import { FaGear } from "react-icons/fa6";
+import {
+  FloatingPortal,
+  useClick,
+  useFloating,
+  useInteractions,
+} from "@floating-ui/react";
+import { useState } from "react";
 
 function ButtonGroup<T>({
   options,
@@ -191,31 +197,67 @@ export function ChartControls({
     </div>
   );
 
-  return (
-    <div className="space-y-2 flex flex-col">
-      {open ? scales : undefined}
-      {open ? columns : undefined}
-      {open ? drawLine : undefined}
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
-      {!open ? (
-        <Popover className="relative self-end">
-          <PopoverButton className="self-end bg-egg-300 hover:bg-egg-400 rounded-md">
-            <button className="text-lg hover:animate-spin-slow align-center p-2">
-              <FaGear size="1.5rem" />
-            </button>
-          </PopoverButton>
-          <PopoverPanel
-            anchor="bottom start"
-            className="flex flex-col z-40 drop-shadow-md"
+  const { refs, floatingStyles, context } = useFloating({
+    placement: "top-start",
+    open: settingsOpen,
+    onOpenChange: setSettingsOpen,
+  });
+
+  const click = useClick(context);
+
+  const { getReferenceProps, getFloatingProps } = useInteractions([click]);
+
+  return (
+    <div>
+      {
+        <div
+          className={[
+            "space-y-2 flex flex-col",
+            "transition-all",
+            !open && "w-max",
+            open ? "opacity-1" : "opacity-0",
+            open ? "visible" : "invisible",
+          ].join(" ")}
+        >
+          {scales}
+          {columns}
+          {drawLine}
+        </div>
+      }
+      <button
+        className={[
+          "text-lg align-center p-2 bg-egg-300 fixed bottom-4 right-2 rounded-md",
+          "transition-all",
+          "disabled:pointer-events-none",
+          "opacity-1",
+          "disabled:opacity-0",
+          "visible",
+          "disable:invisible",
+        ].join(" ")}
+        disabled={open}
+        ref={refs.setReference}
+        {...getReferenceProps()}
+      >
+        <div className="hover:animate-spin-slow">
+          <FaGear size="1.5rem" />
+        </div>
+      </button>
+      {settingsOpen && (
+        <FloatingPortal>
+          <div
+            className="w-max z-40 space-y-2 bg-egg-200 p-2 border-egg-900 border-[1px] rounded-md"
+            ref={refs.setFloating}
+            style={floatingStyles}
+            {...getFloatingProps()}
           >
-            <div className="space-y-2 bg-egg-200 p-2 border-egg-900 border-[1px] rounded-md">
-              {scales}
-              {columns}
-              {drawLine}
-            </div>
-          </PopoverPanel>
-        </Popover>
-      ) : undefined}
+            {scales}
+            {columns}
+            {drawLine}
+          </div>
+        </FloatingPortal>
+      )}
     </div>
   );
 }

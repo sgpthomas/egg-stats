@@ -12,12 +12,9 @@ export function Sidebar(props: PropsWithChildren<Props>) {
   return (
     <div
       style={{ width: width }}
-      className={[
-        "z-30",
-        "transition-all",
-        "translate-x-0",
-        "will-change",
-      ].join(" ")}
+      className={["z-30", "transition-[width]", "will-change", "fixed"].join(
+        " ",
+      )}
     >
       <div
         className={[
@@ -33,7 +30,7 @@ export function Sidebar(props: PropsWithChildren<Props>) {
         ].join(" ")}
       >
         <div className="flex flex-row mb-2">
-          <span className="text-xl font-bold grow content-center ml-2">
+          <span className="text-xl font-bold grow content-center ml-2 truncate">
             {open ? "Egg Visualizer" : undefined}
           </span>
 
