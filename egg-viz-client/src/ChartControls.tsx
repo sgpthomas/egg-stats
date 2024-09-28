@@ -234,7 +234,7 @@ export function ChartControls({
       }
       <button
         className={[
-          "text-lg align-center p-2 bg-egg-300 fixed bottom-4 right-2 rounded-md",
+          "text-lg align-center p-2 bg-egg-300 fixed bottom-[14px] right-[14px] rounded-md",
           "transition-all",
           "disabled:pointer-events-none",
           "opacity-1",

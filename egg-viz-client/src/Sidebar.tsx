@@ -29,10 +29,12 @@ export function Sidebar(props: PropsWithChildren<Props>) {
           "flex-col",
         ].join(" ")}
       >
-        <div className="flex flex-row mb-2">
-          <span className="text-xl font-bold grow content-center ml-2 truncate">
-            {open ? "Egg Visualizer" : undefined}
-          </span>
+        <div className="flex flex-row mb-2 justify-center">
+          {open && (
+            <span className="text-xl font-bold grow content-center truncate ml-2">
+              Egg Visualizer
+            </span>
+          )}
 
           <button
             className={[
@@ -40,7 +42,7 @@ export function Sidebar(props: PropsWithChildren<Props>) {
               "hover:bg-egg-400",
               "rounded-lg",
               "p-2",
-              "content-center",
+              "justify-self-center",
             ].join(" ")}
             onMouseDown={(_e) => {
               if (props.onChange) props.onChange(!open);
