@@ -37,16 +37,15 @@ function FileItem({
     <li key={id}>
       <div
         className={[
-          // "bg-egg-200",
           "border-[1px]",
           "border-egg-400",
           "hover:bg-egg-400",
           "p-2",
           "rounded-md",
-          "w-full",
+          "w-auto",
         ].join(" ")}
       >
-        <div className="flex align-center">
+        <div className="flex">
           <input
             type="checkbox"
             checked={selected.has(id)}
@@ -93,7 +92,17 @@ function FileItem({
 
           {open ? (
             <>
-              <span className="ms-3 text-sm font-medium text-gray-900 truncate grow">
+              <span
+                className={[
+                  "ms-3",
+                  "text-sm",
+                  "font-medium",
+                  "text-gray-900",
+                  "truncate",
+                  "grow",
+                  "place-self-center",
+                ].join(" ")}
+              >
                 {path}
               </span>
               <button onMouseDown={(_) => setExp(!exp)}>

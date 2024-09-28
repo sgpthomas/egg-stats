@@ -90,10 +90,10 @@ export function ChartControls({
   const scales = (
     <div
       id="control-scaleType"
-      className="bg-egg-300 rounded p-2 space-y-[0.5px]"
+      className="bg-egg-300 rounded p-2 space-y-[0.5px] w-full"
     >
-      <div className="font-bold">Scales:</div>
-      <div className="space-x-2">
+      <div className="font-bold truncate">Scales:</div>
+      <div className="space-x-2 w-max">
         <span className="inline-block w-4">X:</span>
         <ButtonGroup<"linear" | "log">
           options={["linear", "log"]}
@@ -106,7 +106,7 @@ export function ChartControls({
           }}
         />
       </div>
-      <div className="space-x-2">
+      <div className="space-x-2 w-max">
         <span className="inline-block w-4">Y:</span>
         <ButtonGroup<"linear" | "log">
           options={["linear", "log"]}
@@ -125,10 +125,10 @@ export function ChartControls({
   const columns = (
     <div
       id="control-columns"
-      className="bg-egg-300 rounded p-2 space-y-[0.5px]"
+      className="bg-egg-300 rounded p-2 space-y-[0.5px] w-full"
     >
-      <div className="font-bold">Column Types:</div>
-      <div className="space-x-2">
+      <div className="font-bold truncate">Column Types:</div>
+      <div className="space-x-2 w-max">
         <span className="inline-block w-4">X:</span>
         <select
           onChange={(e) => {
@@ -148,7 +148,7 @@ export function ChartControls({
           ))}
         </select>
       </div>
-      <div className="space-x-2">
+      <div className="space-x-2 w-max">
         <span className="inline-block w-4">Y:</span>
         <select
           onChange={(e) => {
@@ -172,29 +172,31 @@ export function ChartControls({
   );
 
   const drawLine = (
-    <div id="control-drawLine" className="bg-egg-300 rounded p-2 space-x-2">
-      <span className="font-bold">Draw Lines:</span>
-      <button
-        onClick={(_) => {
-          const c = new ChartOptions(ctrls);
-          c.drawLine = !ctrls.drawLine;
-          setCtrls(c);
-          onChange(c);
-        }}
-        className={[
-          "rounded-md",
-          "px-2",
-          "py-[0.75px]",
-          "hover:bg-eggshell-hover",
-          "hover:text-gray-100",
-          "hover:shadow-lg",
-          "hover:z-10",
-          ctrls.drawLine ? "bg-eggshell-active" : "bg-white",
-          "text-black",
-        ].join(" ")}
-      >
-        true
-      </button>
+    <div id="control-drawLine" className="bg-egg-300 rounded p-2 w-full">
+      <div className="space-x-2 w-max">
+        <span className="font-bold truncate">Draw Lines:</span>
+        <button
+          onClick={(_) => {
+            const c = new ChartOptions(ctrls);
+            c.drawLine = !ctrls.drawLine;
+            setCtrls(c);
+            onChange(c);
+          }}
+          className={[
+            "rounded-md",
+            "px-2",
+            "py-[0.75px]",
+            "hover:bg-eggshell-hover",
+            "hover:text-gray-100",
+            "hover:shadow-lg",
+            "hover:z-10",
+            ctrls.drawLine ? "bg-eggshell-active" : "bg-white",
+            "text-black",
+          ].join(" ")}
+        >
+          true
+        </button>
+      </div>
     </div>
   );
 
@@ -221,7 +223,6 @@ export function ChartControls({
           className={[
             "space-y-2 flex flex-col",
             "transition-all",
-            !open && "w-max",
             open ? "opacity-1" : "opacity-0",
             open ? "visible" : "invisible",
           ].join(" ")}
