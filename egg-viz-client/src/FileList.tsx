@@ -55,37 +55,42 @@ function FileItem({
           />
           <div
             style={{
-              background: selected.has(id) ? colors[id] : undefined,
+              background: selected.has(id) ? colors[id] : "#fedbaa",
+              borderColor: colors[id],
             }}
             onMouseDown={(_) => onSelect(id)}
             className={[
               "relative",
-              "w-9",
-              "min-w-9",
-              "h-5",
-              "bg-egg-200",
-              "peer-focus:outline-none",
-              "peer-focus:ring-2",
-              "peer-focus:ring-eggshell-300",
+              "min-w-[26px]",
+              "min-h-[26px]",
               "rounded-full",
               "peer",
-              "peer-checked:after:translate-x-full",
-              "peer-checked:after:border-white",
-              "peer-checked:bg-eggshell-active",
-              "rtl:peer-checked:after:-translate-x-full",
-              "after:content-['']",
-              "after:absolute",
-              "after:top-[2px]",
-              "after:start-[2px]",
-              "after:bg-white",
-              "after:border-egg-300",
-              "after:border",
+              "border-[5px]",
+              "shadow-inner-lg",
+              "transition-[background-color]",
+
+              "before:border-[1px]",
+              "before:border-egg-500",
+              "before:rounded-full",
+              "before:min-w-[18px]",
+              "before:min-h-[18px]",
+              "before:absolute",
+              "before:top-[-1px]",
+              "before:start-[-1px]",
+              "before:content-['']",
+
+              "after:border-[1px]",
+              "after:border-egg-500",
               "after:rounded-full",
-              "after:h-4",
-              "after:w-4",
-              "after:transition-all",
+              "after:min-w-[26px]",
+              "after:min-h-[26px]",
+              "after:absolute",
+              "after:top-[-5px]",
+              "after:start-[-5px]",
+              "after:content-['']",
             ].join(" ")}
           ></div>
+
           {open ? (
             <>
               <span className="ms-3 text-sm font-medium text-gray-900 truncate grow">

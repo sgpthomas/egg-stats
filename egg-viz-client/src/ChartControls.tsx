@@ -4,6 +4,7 @@ import { FaGear } from "react-icons/fa6";
 import {
   FloatingPortal,
   useClick,
+  useDismiss,
   useFloating,
   useInteractions,
 } from "@floating-ui/react";
@@ -206,8 +207,12 @@ export function ChartControls({
   });
 
   const click = useClick(context);
+  const dismiss = useDismiss(context);
 
-  const { getReferenceProps, getFloatingProps } = useInteractions([click]);
+  const { getReferenceProps, getFloatingProps } = useInteractions([
+    click,
+    dismiss,
+  ]);
 
   return (
     <div>

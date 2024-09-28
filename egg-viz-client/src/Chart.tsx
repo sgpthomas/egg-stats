@@ -2,7 +2,13 @@ import { ReactElement, useMemo, MouseEvent, useState } from "react";
 import { ChartSettings, useChartDimensions } from "./useChartDimensions";
 import * as d3 from "d3";
 import { PivotTable } from "./DataProcessing";
-import { flip, offset, shift, useFloating } from "@floating-ui/react";
+import {
+  autoUpdate,
+  flip,
+  offset,
+  shift,
+  useFloating,
+} from "@floating-ui/react";
 import { XAxis, YAxis } from "./Axis";
 import { Grid } from "./Grid";
 import { ChartOptions } from "./ChartControls";
@@ -51,6 +57,8 @@ function useTooltip() {
   const { refs, floatingStyles } = useFloating({
     placement: "top",
     middleware: [offset(5), flip(), shift()],
+    transform: true,
+    whileElementsMounted: autoUpdate,
   });
 
   return {
@@ -188,7 +196,7 @@ export function Chart({
       <div
         ref={tooltip.floatingRef}
         style={{ ...tooltip.floatingStyles, visibility: tooltip.visibility }}
-        className="fixed block bg-white rounded-md border-[1px] border-egg-900 drop-shadow-lg px-1"
+        className="fixed block bg-white rounded-md border-[1px] border-egg-900 drop-shadow-lg px-1 top-0 left-0"
       >
         {tooltip.content}
       </div>
