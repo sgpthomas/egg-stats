@@ -13,6 +13,7 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { Sidebar } from "./Sidebar";
 import { useMemo } from "react";
 import { ChartControls, ChartOptions } from "./ChartControls";
+import * as d3 from "d3";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -218,6 +219,8 @@ function Home() {
     (str) => new Map(JSON.parse(str)),
   );
 
+  const colors = useMemo(() => d3.schemeSet2, []);
+
   return (
     <main>
       <div className="">
@@ -242,6 +245,7 @@ function Home() {
                 selectedRules.set(id, rule);
                 setSelectedRules(new Map(selectedRules));
               }}
+              colors={colors}
             />
           </div>
           <div>
@@ -276,6 +280,7 @@ function Home() {
               .map((table) => table.data)}
             ctrls={ctrls}
             selectedRules={selectedRules}
+            colors={colors}
           />
         </div>
       </div>

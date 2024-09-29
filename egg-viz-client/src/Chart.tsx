@@ -218,9 +218,9 @@ export function Chart({
           stroke="hsl(37, 70%, 80%)"
         />
         <g transform={`translate(${dms.marginLeft}, ${dms.marginTop})`}>
-          <YAxis scale={yScale} nTicks={5} />
+          <YAxis scale={yScale} />
           <g transform={`translate(0, ${dms.boundedHeight})`}>
-            <XAxis scale={xScale} nTicks={ctrls.nTicks.y} />
+            <XAxis scale={xScale} />
           </g>
           {lines?.map(([id, child], idx) => (
             <g key={idx}>

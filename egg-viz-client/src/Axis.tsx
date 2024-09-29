@@ -4,13 +4,17 @@ export type d3Scale =
   | d3.ScaleLinear<number, number>
   | d3.ScaleLogarithmic<number, number>;
 
-export function XAxis({ scale, nTicks }: { scale: d3Scale; nTicks?: number }) {
+export function XAxis({ scale }: { scale: d3Scale }) {
   const ticks = useMemo(() => {
-    return scale.ticks(nTicks).map((value) => ({
+    const width = Math.abs(
+      (scale.domain()[0] ?? 100) - (scale.domain()[1] ?? 0),
+    );
+
+    return scale.ticks(Math.trunc(Math.log10(width))).map((value) => ({
       value,
       offset: scale(value),
     }));
-  }, [scale.domain().join("-"), scale.range().join("-"), nTicks]);
+  }, [scale.domain().join("-"), scale.range().join("-")]);
 
   return (
     <svg overflow="visible">
@@ -48,13 +52,16 @@ export function XAxis({ scale, nTicks }: { scale: d3Scale; nTicks?: number }) {
   );
 }
 
-export function YAxis({ scale, nTicks }: { scale: d3Scale; nTicks?: number }) {
+export function YAxis({ scale }: { scale: d3Scale }) {
   const ticks = useMemo(() => {
-    return scale.ticks(nTicks).map((value) => ({
+    const width = Math.abs(
+      (scale.domain()[0] ?? 100) - (scale.domain()[1] ?? 0),
+    );
+    return scale.ticks(Math.trunc(Math.log10(width))).map((value) => ({
       value,
       offset: scale(value),
     }));
-  }, [scale.domain().join("-"), scale.range().join("-"), nTicks]);
+  }, [scale.domain().join("-"), scale.range().join("-")]);
 
   return (
     <svg overflow="visible">

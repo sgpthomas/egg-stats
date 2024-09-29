@@ -1,7 +1,8 @@
 import * as d3 from "d3";
 import * as fa6 from "react-icons/fa6";
+import * as convert from "color-convert";
 import { AvailableResponse } from "./App";
-import { PropsWithChildren, useMemo, useState } from "react";
+import { PropsWithChildren, useMemo } from "react";
 import usePersistState from "./usePersistState";
 import { PivotTable } from "./DataProcessing";
 
@@ -16,6 +17,12 @@ function CollapseDiv(props: PropsWithChildren<{ expanded: boolean }>) {
       <div className="overflow-hidden">{props.children}</div>
     </div>
   );
+}
+
+function darkenColor(color?: string): string | undefined {
+  if (!color) return;
+  const [hue, sat, light] = convert.hex.hsl(color);
+  return `#${convert.hsl.hex([hue, sat, light / 1.3])}`;
 }
 
 function FileItem({
@@ -38,7 +45,6 @@ function FileItem({
   onRule: (rule: string | null) => void;
 }) {
   const [exp, setExp] = usePersistState<boolean>(false, `file-item-${id}`);
-  // const [numRules, setNumRules] = useState<number>(0);
   const [selRule, setSelRul] = usePersistState<string | null>(
     null,
     `file-item-sel-rule-${id}`,
@@ -54,8 +60,6 @@ function FileItem({
       return acc;
     }, new Set());
     return uniqueRules;
-    // setNumRules(uniqueRules.size);
-    // return;
   }, [table?.file_id]);
 
   return (
@@ -80,7 +84,7 @@ function FileItem({
           <div
             style={{
               background: selected.has(id) ? colors[id] : "#fedbaa",
-              borderColor: colors[id],
+              borderColor: darkenColor(colors[id]),
             }}
             onMouseDown={(_) => onSelect(id)}
             className={[
@@ -92,26 +96,6 @@ function FileItem({
               "border-[5px]",
               "shadow-inner-lg",
               "transition-[background-color]",
-
-              "before:border-[1px]",
-              "before:border-egg-500",
-              "before:rounded-full",
-              "before:min-w-[18px]",
-              "before:min-h-[18px]",
-              "before:absolute",
-              "before:top-[-1px]",
-              "before:start-[-1px]",
-              "before:content-['']",
-
-              "after:border-[1px]",
-              "after:border-egg-500",
-              "after:rounded-full",
-              "after:min-w-[26px]",
-              "after:min-h-[26px]",
-              "after:absolute",
-              "after:top-[-5px]",
-              "after:start-[-5px]",
-              "after:content-['']",
             ].join(" ")}
           ></div>
 

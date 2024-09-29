@@ -67,7 +67,7 @@ export class ChartOptions {
 
   constructor(other?: ChartOptions) {
     this.scaleType = other?.scaleType ?? { x: "linear", y: "linear" };
-    this.nTicks = other?.nTicks ?? { x: 5, y: 5 };
+    this.nTicks = other?.nTicks ?? { x: 100, y: 100 };
     this.drawLine = other?.drawLine ?? true;
     this.columns = other?.columns ?? { x: "index", y: "cost" };
   }
