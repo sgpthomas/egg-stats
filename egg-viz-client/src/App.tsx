@@ -209,6 +209,15 @@ function Home() {
 
   const [open, setOpen] = usePersistState<boolean>(true, "app-sidebar-state");
 
+  const [selectedRules, setSelectedRules] = usePersistState<
+    Map<number, string | null>
+  >(
+    new Map(),
+    "app-selected-rules",
+    (map) => JSON.stringify([...map.entries()]),
+    (str) => new Map(JSON.parse(str)),
+  );
+
   return (
     <main>
       <div className="">
@@ -228,6 +237,10 @@ function Home() {
                   selected.add(id);
                 }
                 setSelected(new Set(selected));
+              }}
+              onRuleChange={(id, rule) => {
+                selectedRules.set(id, rule);
+                setSelectedRules(new Map(selectedRules));
               }}
             />
           </div>
@@ -262,6 +275,7 @@ function Home() {
               .filter((table) => !!table.data)
               .map((table) => table.data)}
             ctrls={ctrls}
+            selectedRules={selectedRules}
           />
         </div>
       </div>

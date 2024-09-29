@@ -16,6 +16,7 @@ import { ChartOptions } from "./ChartControls";
 export interface Point<T = number> {
   x: T;
   y: T;
+  rule?: string;
 }
 
 function scaleBound(input: number): number {
@@ -91,10 +92,12 @@ function useTooltip() {
 function DataPoint({
   point,
   fill = "currentColor",
+  selected = false,
   onHover = (_e, _b) => {},
 }: {
   point: Point;
   fill?: string;
+  selected?: boolean;
   onHover?: (e: MouseEvent, active: boolean) => void;
 }) {
   let [smR, lgR] = [2.5, 4.0];
@@ -106,7 +109,7 @@ function DataPoint({
     <circle
       cx={point.x}
       cy={point.y}
-      r={rad}
+      r={selected ? rad * 2 : rad}
       fill={fill}
       stroke="black"
       onMouseOver={(e) => {
@@ -126,11 +129,13 @@ export function Chart({
   ctrls,
   marginLeft,
   colors = d3.schemeAccent,
+  selectedRules = new Map(),
 }: {
   tables?: PivotTable[];
   ctrls: ChartOptions;
   marginLeft: number;
   colors?: readonly string[];
+  selectedRules?: Map<number, string | null>;
 }) {
   // const colors = useMemo(() => d3.scaleOrdinal(d3.schemeAccent), []);
 
@@ -233,6 +238,7 @@ export function Chart({
                   key={`${idx}-${ptidx}`}
                   fill={colors[id]}
                   point={{ x: xScale(pt.x), y: yScale(pt.y) }}
+                  selected={selectedRules.get(id) == pt.rule}
                   onHover={(e, h) => {
                     if (!h) {
                       tooltip.set(undefined);
@@ -276,5 +282,9 @@ function points(
 
   return PivotTable.map(table, (row) => row)
     .filter((row) => row["when"] === "before_rewrite")
-    .map((row, idx) => ({ x: xSel(row, idx), y: ySel(row, idx) }));
+    .map((row, idx) => ({
+      x: xSel(row, idx),
+      y: ySel(row, idx),
+      rule: row["rule"],
+    }));
 }

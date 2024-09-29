@@ -26,6 +26,7 @@ function FileItem({
   open,
   selected,
   colors,
+  onRule,
 }: {
   path: string;
   id: number;
@@ -34,12 +35,17 @@ function FileItem({
   open: boolean;
   selected: Set<number>;
   colors: readonly string[];
+  onRule: (rule: string | null) => void;
 }) {
   const [exp, setExp] = usePersistState<boolean>(false, `file-item-${id}`);
-  const [numRules, setNumRules] = useState<number>(0);
+  // const [numRules, setNumRules] = useState<number>(0);
+  const [selRule, setSelRul] = usePersistState<string | null>(
+    null,
+    `file-item-sel-rule-${id}`,
+  );
 
-  const ruleList = useMemo(() => {
-    if (!table) return [];
+  const ruleList: Set<string> = useMemo(() => {
+    if (!table) return new Set();
     const uniqueRules: Set<string> = PivotTable.map(
       table,
       (row) => row.rule,
@@ -47,16 +53,9 @@ function FileItem({
       acc.add(el);
       return acc;
     }, new Set());
-    setNumRules(uniqueRules.size);
-    return (
-      table && (
-        <div className="h-28 overflow-scroll">
-          {[...uniqueRules.values()].map((rule, idx) => {
-            return <div key={idx}>{rule}</div>;
-          })}
-        </div>
-      )
-    );
+    return uniqueRules;
+    // setNumRules(uniqueRules.size);
+    // return;
   }, [table?.file_id]);
 
   return (
@@ -147,7 +146,7 @@ function FileItem({
               {table && (
                 <>
                   <div className="font-bold">Value names:</div>
-                  <div className="flex flex-row flex-wrap gap-1">
+                  <div className="flex flex-row flex-wrap gap-[0.75px]">
                     {table.value_names.map((value, idx) => (
                       <div
                         key={idx}
@@ -160,10 +159,37 @@ function FileItem({
                 </>
               )}
               <div className="font-bold">
-                {numRules} {numRules > 1 ? "rules" : "rule"} used:
+                {ruleList?.size} {ruleList?.size > 1 ? "rules" : "rule"} used:
               </div>
-              <div className="border-2 border-egg-400 bg-egg-300 rounded-md pl-2 shadow-inner">
-                {ruleList}
+              <div className="border-2 border-egg-400 bg-egg-300 rounded-md shadow-inner">
+                {ruleList && (
+                  <div className="h-28 overflow-scroll">
+                    {[...ruleList.values()].map((rule, idx) => {
+                      return (
+                        <div key={idx}>
+                          <button
+                            className={[
+                              "w-full text-left pl-2",
+                              selRule === rule && "bg-eggshell-400",
+                            ].join(" ")}
+                            key={idx}
+                            onMouseDown={(_) => {
+                              if (selRule === rule) {
+                                setSelRul(null);
+                                onRule(null);
+                              } else {
+                                setSelRul(rule);
+                                onRule(rule);
+                              }
+                            }}
+                          >
+                            {rule}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           </CollapseDiv>
@@ -180,6 +206,7 @@ export function FileList({
   open,
   selected,
   colors = d3.schemeAccent,
+  onRuleChange = (_i, _r) => {},
 }: {
   knownFiles?: AvailableResponse;
   tables?: PivotTable[];
@@ -187,6 +214,7 @@ export function FileList({
   open: boolean;
   selected: Set<number>;
   colors?: readonly string[];
+  onRuleChange?: (id: number, rule: string | null) => void;
 }) {
   if (!knownFiles) return "Loading...";
 
@@ -202,6 +230,7 @@ export function FileList({
           open={open}
           selected={selected}
           colors={colors}
+          onRule={(rule) => onRuleChange(id, rule)}
         />
       ))}
     </ul>
