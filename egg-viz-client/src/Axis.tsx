@@ -4,7 +4,13 @@ export type d3Scale =
   | d3.ScaleLinear<number, number>
   | d3.ScaleLogarithmic<number, number>;
 
-export function XAxis({ scale }: { scale: d3Scale }) {
+export function XAxis({
+  scale,
+  label = "test",
+}: {
+  scale: d3Scale;
+  label?: string;
+}) {
   const ticks = useMemo(() => {
     const width = Math.abs(
       (scale.domain()[0] ?? 100) - (scale.domain()[1] ?? 0),
@@ -15,6 +21,13 @@ export function XAxis({ scale }: { scale: d3Scale }) {
       offset: scale(value),
     }));
   }, [scale.domain().join("-"), scale.range().join("-")]);
+
+  const midPoint = useMemo(() => {
+    const range = scale.range();
+    console.log(range);
+    if (range[0] === undefined || range[1] === undefined) return 0;
+    return Math.abs(range[0] + range[1]) / 2;
+  }, [scale.range().join("-")]);
 
   return (
     <svg overflow="visible">
@@ -48,11 +61,20 @@ export function XAxis({ scale }: { scale: d3Scale }) {
           </text>
         </g>
       ))}
+      <text textAnchor="middle" transform={`translate(${midPoint}, 30)`}>
+        {label}
+      </text>
     </svg>
   );
 }
 
-export function YAxis({ scale }: { scale: d3Scale }) {
+export function YAxis({
+  scale,
+  label = "test",
+}: {
+  scale: d3Scale;
+  label?: string;
+}) {
   const ticks = useMemo(() => {
     const width = Math.abs(
       (scale.domain()[0] ?? 100) - (scale.domain()[1] ?? 0),
@@ -62,6 +84,13 @@ export function YAxis({ scale }: { scale: d3Scale }) {
       offset: scale(value),
     }));
   }, [scale.domain().join("-"), scale.range().join("-")]);
+
+  const midPoint = useMemo(() => {
+    const range = scale.range();
+    console.log(range);
+    if (range[0] === undefined || range[1] === undefined) return 0;
+    return Math.abs(range[0] + range[1]) / 2;
+  }, [scale.range().join("-")]);
 
   return (
     <svg overflow="visible">
@@ -95,6 +124,12 @@ export function YAxis({ scale }: { scale: d3Scale }) {
           </text>
         </g>
       ))}
+      <text
+        textAnchor="middle"
+        transform={`translate(-10, ${midPoint}), rotate(-90)`}
+      >
+        {label}
+      </text>
     </svg>
   );
 }
