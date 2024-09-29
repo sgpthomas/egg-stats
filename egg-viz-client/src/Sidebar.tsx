@@ -27,6 +27,7 @@ export function Sidebar(props: PropsWithChildren<Props>) {
           "drop-shadow-md",
           "flex",
           "flex-col",
+          "space-y-2",
         ].join(" ")}
       >
         <div className="flex flex-row mb-2 justify-center">

@@ -215,7 +215,10 @@ function Home() {
         <Sidebar onChange={(o) => setOpen(o)}>
           <div className="grow">
             <FileList
-              data={knownFiles}
+              knownFiles={knownFiles}
+              tables={tableQueries
+                .filter((table) => !!table.data)
+                .map((table) => table.data)}
               selected={selected}
               open={open}
               onSelect={(id) => {

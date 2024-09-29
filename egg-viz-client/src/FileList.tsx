@@ -1,8 +1,9 @@
 import * as d3 from "d3";
 import * as fa6 from "react-icons/fa6";
 import { AvailableResponse } from "./App";
-import { PropsWithChildren, useState } from "react";
+import { PropsWithChildren, useMemo, useState } from "react";
 import usePersistState from "./usePersistState";
+import { PivotTable } from "./DataProcessing";
 
 function CollapseDiv(props: PropsWithChildren<{ expanded: boolean }>) {
   return (
@@ -18,20 +19,45 @@ function CollapseDiv(props: PropsWithChildren<{ expanded: boolean }>) {
 }
 
 function FileItem({
-  data,
+  path,
+  id,
+  table,
   onSelect,
   open,
   selected,
   colors,
 }: {
-  data: [number, string];
+  path: string;
+  id: number;
+  table?: PivotTable;
   onSelect: (id: number) => void;
   open: boolean;
   selected: Set<number>;
   colors: readonly string[];
 }) {
-  const [id, path] = data;
   const [exp, setExp] = usePersistState<boolean>(false, `file-item-${id}`);
+  const [numRules, setNumRules] = useState<number>(0);
+
+  const ruleList = useMemo(() => {
+    if (!table) return [];
+    const uniqueRules: Set<string> = PivotTable.map(
+      table,
+      (row) => row.rule,
+    ).reduce((acc: Set<string>, el: string) => {
+      acc.add(el);
+      return acc;
+    }, new Set());
+    setNumRules(uniqueRules.size);
+    return (
+      table && (
+        <div className="h-28 overflow-scroll">
+          {[...uniqueRules.values()].map((rule, idx) => {
+            return <div key={idx}>{rule}</div>;
+          })}
+        </div>
+      )
+    );
+  }, [table?.file_id]);
 
   return (
     <li key={id}>
@@ -106,42 +132,72 @@ function FileItem({
                 {path}
               </span>
               <button onMouseDown={(_) => setExp(!exp)}>
-                {exp ? <fa6.FaCaretDown /> : <fa6.FaCaretRight />}
+                <div
+                  className={["transition-all", exp && "rotate-90"].join(" ")}
+                >
+                  <fa6.FaCaretRight />
+                </div>
               </button>
             </>
           ) : undefined}
         </div>
-        {open ? (
+        {open && (
           <CollapseDiv expanded={exp}>
-            <div className="mt-1">File Id: {id}</div>
+            <div className="mt-1 space-y-1">
+              {table && (
+                <>
+                  <div className="font-bold">Value names:</div>
+                  <div className="flex flex-row flex-wrap gap-1">
+                    {table.value_names.map((value, idx) => (
+                      <div
+                        key={idx}
+                        className="border-2 rounded-md border-egg-400 bg-egg-300 px-1 shadow-inner"
+                      >
+                        {value}
+                      </div>
+                    ))}
+                  </div>{" "}
+                </>
+              )}
+              <div className="font-bold">
+                {numRules} {numRules > 1 ? "rules" : "rule"} used:
+              </div>
+              <div className="border-2 border-egg-400 bg-egg-300 rounded-md pl-2 shadow-inner">
+                {ruleList}
+              </div>
+            </div>
           </CollapseDiv>
-        ) : undefined}
+        )}
       </div>
     </li>
   );
 }
 
 export function FileList({
-  data,
+  knownFiles,
+  tables,
   onSelect,
   open,
   selected,
   colors = d3.schemeAccent,
 }: {
-  data?: AvailableResponse;
+  knownFiles?: AvailableResponse;
+  tables?: PivotTable[];
   onSelect: (id: number) => void;
   open: boolean;
   selected: Set<number>;
   colors?: readonly string[];
 }) {
-  if (!data) return "Invalid data!";
+  if (!knownFiles) return "Loading...";
 
   return (
     <ul className="space-y-1 font-medium p-1 rounded-md bg-egg-300">
-      {data.paths.map(([id, path], idx) => (
+      {knownFiles.paths.map(([id, path], idx) => (
         <FileItem
           key={idx}
-          data={[id, path]}
+          id={id}
+          path={path}
+          table={tables?.find((table) => table.file_id === id)}
           onSelect={onSelect}
           open={open}
           selected={selected}
