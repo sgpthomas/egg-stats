@@ -1,12 +1,16 @@
 [package]
 name = "egg-viz"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license = "MIT"
 description = "View statistics for egg e-graphs"
 homepage = "https://github.com/sgpthomas/egg-stats"
 repository = "https://github.com/sgpthomas/egg-stats"
 readme = "../README.md"
+include = [
+        "build/*",
+        "**/*.rs"
+]
 
 [dependencies]
 anyhow = "1.0.89"

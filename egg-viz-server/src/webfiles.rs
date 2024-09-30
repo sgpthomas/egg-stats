@@ -4,8 +4,7 @@ use warp::Filter;
 
 use crate::HasExtension;
 
-const CLIENT_FILES: include_dir::Dir =
-    include_dir::include_dir!("$CARGO_MANIFEST_DIR/../egg-viz-client/build");
+const CLIENT_FILES: include_dir::Dir = include_dir::include_dir!("$CARGO_MANIFEST_DIR/build");
 
 #[derive(Clone)]
 pub enum WebfileReply {
