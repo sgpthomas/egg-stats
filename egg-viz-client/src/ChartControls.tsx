@@ -1,6 +1,6 @@
 import { Point } from "./Chart";
 import usePersistState from "./usePersistState";
-import { FaGear } from "react-icons/fa6";
+import * as fa6 from "react-icons/fa6";
 import {
   FloatingPortal,
   useClick,
@@ -90,9 +90,14 @@ export function ChartControls({
   const scales = (
     <div
       id="control-scaleType"
-      className="bg-egg-300 rounded p-2 space-y-[0.5px] w-full"
+      className="border-[1px] border-egg-400 rounded-md p-2 space-y-[0.5px] w-full"
     >
-      <div className="font-bold truncate">Scales:</div>
+      <div className="font-bold truncate flex items-center space-x-2">
+        <span>
+          <fa6.FaChartLine />
+        </span>
+        <span>Scales:</span>
+      </div>
       <div className="space-x-2 w-max">
         <span className="inline-block w-4">X:</span>
         <ButtonGroup<"linear" | "log">
@@ -125,9 +130,14 @@ export function ChartControls({
   const columns = (
     <div
       id="control-columns"
-      className="bg-egg-300 rounded p-2 space-y-[0.5px] w-full"
+      className="border-[1px] border-egg-400 rounded p-2 space-y-[0.5px] w-full"
     >
-      <div className="font-bold truncate">Column Types:</div>
+      <div className="font-bold truncate flex items-center space-x-2">
+        <span>
+          <fa6.FaTable />
+        </span>
+        <span>Column Types:</span>
+      </div>
       <div className="space-x-2 w-max">
         <span className="inline-block w-4">X:</span>
         <select
@@ -172,8 +182,14 @@ export function ChartControls({
   );
 
   const drawLine = (
-    <div id="control-drawLine" className="bg-egg-300 rounded p-2 w-full">
-      <div className="space-x-2 w-max">
+    <div
+      id="control-drawLine"
+      className="border-[1px] border-egg-400 rounded p-2 w-full"
+    >
+      <div className="space-x-2 w-max flex items-center">
+        <span>
+          <fa6.FaPenClip />
+        </span>
         <span className="font-bold truncate">Draw Lines:</span>
         <button
           onClick={(_) => {
@@ -221,7 +237,7 @@ export function ChartControls({
       {
         <div
           className={[
-            "space-y-2 flex flex-col",
+            "space-y-1 flex flex-col bg-egg-300 p-1 rounded-md",
             "transition-all",
             open ? "opacity-1" : "opacity-0",
             open ? "visible" : "invisible",
@@ -241,19 +257,30 @@ export function ChartControls({
           "disabled:opacity-0",
           "visible",
           "disable:invisible",
+          "hover:bg-egg-400",
         ].join(" ")}
         disabled={open}
         ref={refs.setReference}
         {...getReferenceProps()}
       >
         <div className="hover:animate-spin-slow">
-          <FaGear size="1.5rem" />
+          <fa6.FaGear size="1.5rem" />
         </div>
       </button>
       {settingsOpen && (
         <FloatingPortal>
           <div
-            className="w-max z-40 space-y-2 bg-egg-200 p-2 border-egg-900 border-[1px] rounded-md"
+            className={[
+              "w-max",
+              "z-40",
+              "space-y-1",
+              "bg-egg-300",
+              "p-2",
+              "border-egg-400",
+              "border-[1px]",
+              "rounded-md",
+              "drop-shadow-md",
+            ].join(" ")}
             ref={refs.setFloating}
             style={floatingStyles}
             {...getFloatingProps()}
