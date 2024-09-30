@@ -9,6 +9,7 @@ readme = "README.md"
 exclude = [
         "egg-viz-client/*"
 ]
+license = "MIT"
 
 [workspace]
 members = [
