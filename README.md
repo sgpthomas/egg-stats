@@ -63,3 +63,5 @@ Simply run the following command to open the web interface, passing in the direc
 ```bash
 egg-viz <csv data dir>
 ```
+
+![image](https://github.com/user-attachments/assets/702f6445-7148-4fd2-b684-bdb30b8e4a52)
