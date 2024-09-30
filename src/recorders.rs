@@ -69,11 +69,22 @@ impl<C> BestProgram<C> {
     }
 }
 
+/// Custom clone trait so that
+pub trait Replicate {
+    fn replicate(&self) -> Self;
+}
+
+impl Replicate for egg::AstSize {
+    fn replicate(&self) -> Self {
+        egg::AstSize
+    }
+}
+
 impl<L, N, C> Recorder<L, N> for BestProgram<C>
 where
     L: egg::Language,
     N: egg::Analysis<L>,
-    C: egg::CostFunction<L> + Clone,
+    C: egg::CostFunction<L> + Replicate,
     <C as egg::CostFunction<L>>::Cost: std::fmt::Display,
 {
     fn identifier(&self) -> Cow<'static, str> {
@@ -87,7 +98,7 @@ where
         _rewrite: &egg::Rewrite<L, N>,
         _matches: &[egg::SearchMatches<L>],
     ) -> Option<String> {
-        let extractor = egg::Extractor::new(egraph, self.cost_fn.clone());
+        let extractor = egg::Extractor::new(egraph, self.cost_fn.replicate());
         Some(format!("{}", extractor.find_best_cost(self.root)))
     }
 
@@ -100,7 +111,7 @@ where
     ) -> Option<String> {
         if self.rebuild {
             egraph.rebuild();
-            let extractor = egg::Extractor::new(egraph, self.cost_fn.clone());
+            let extractor = egg::Extractor::new(egraph, self.cost_fn.replicate());
             Some(format!("{}", extractor.find_best_cost(self.root)))
         } else {
             None
