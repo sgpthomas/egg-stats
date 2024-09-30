@@ -6,6 +6,14 @@ module.exports = {
     extend: {
       animation: {
         "spin-slow": "spin 2s linear infinite",
+        "subtle-pulse":
+          "subtlepulse 1.75s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+      },
+      keyframes: {
+        subtlepulse: {
+          "0%, 100%": { opacity: 1 },
+          "50%": { opacity: 0.65 },
+        },
       },
       colors: {
         transparent: "transparent",

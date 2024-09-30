@@ -5,6 +5,7 @@ import { AvailableResponse } from "./App";
 import { PropsWithChildren, useMemo } from "react";
 import usePersistState from "./usePersistState";
 import { PivotTable } from "./DataProcessing";
+import { UseQueryResult } from "@tanstack/react-query";
 
 function CollapseDiv(props: PropsWithChildren<{ expanded: boolean }>) {
   return (
@@ -192,7 +193,7 @@ export function FileList({
   colors = d3.schemeAccent,
   onRuleChange = (_i, _r) => {},
 }: {
-  knownFiles?: AvailableResponse;
+  knownFiles: UseQueryResult<AvailableResponse>;
   tables?: PivotTable[];
   onSelect: (id: number) => void;
   open: boolean;
@@ -200,11 +201,47 @@ export function FileList({
   colors?: readonly string[];
   onRuleChange?: (id: number, rule: string | null) => void;
 }) {
-  if (!knownFiles) return "Loading...";
+  if (knownFiles.isPending)
+    return (
+      <div className="p-1 bg-egg-300 rounded-md flex space-x-1 items-center animate-subtle-pulse justify-center">
+        <span className={[open && "ml-1"].join("")}>
+          <fa6.FaCircleNotch className="animate-spin" />
+        </span>
+        {open && (
+          <span className="text-sm text-center font-bold truncate grow">
+            Connecting to port 8080
+          </span>
+        )}
+      </div>
+    );
+
+  if (knownFiles.error)
+    return (
+      <div className="p-1 bg-egg-300 rounded-md flex space-x-1 items-center justify-center">
+        <span className={[open && "ml-1"].join("")}>
+          <fa6.FaCircleExclamation className="fill-red-800" />
+        </span>
+        {open && (
+          <span className="text-sm text-center text-red-800 font-bold grow truncate">
+            Could not find server
+          </span>
+        )}
+      </div>
+    );
+
+  if (!knownFiles.data)
+    return (
+      <div className="p-1 bg-egg-300 rounded-md flex space-x-1 items-center">
+        <span>
+          <fa6.FaCircleExclamation className="ml-1" />
+        </span>
+        <span className="text-sm text-center grow">Invalid data</span>
+      </div>
+    );
 
   return (
     <ul className="space-y-1 font-medium p-1 rounded-md bg-egg-300">
-      {knownFiles.paths.map(([id, path], idx) => (
+      {knownFiles.data.paths.map(([id, path], idx) => (
         <FileItem
           key={idx}
           id={id}

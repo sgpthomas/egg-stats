@@ -161,7 +161,8 @@ function Home() {
   const knownFiles = useQuery({
     queryKey: ["knownFiles"],
     queryFn: fetchAvailable,
-  }).data;
+    retry: 3,
+  });
 
   async function fetchFileId(file_id: number): Promise<PivotTable> {
     console.log(`fetching ${file_id}`);
