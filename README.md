@@ -1,8 +1,8 @@
 # Egg Stats
 
-![![Crates.io Version](https://img.shields.io/crates/v/egg-stats?label=egg-stats)](https://crates.io/crates/egg-stats)
-![![docs.rs](https://img.shields.io/docsrs/egg-stats?label=egg-stats%20docs)](https://docs.rs/egg-stats/)
-![![Crates.io Version](https://img.shields.io/crates/v/egg-viz?label=egg-viz)](https://crates.io/crates/egg-viz)
+[![Crates.io Version](https://img.shields.io/crates/v/egg-stats?label=egg-stats)](https://crates.io/crates/egg-stats)
+[![docs.rs](https://img.shields.io/docsrs/egg-stats?label=egg-stats%20docs)](https://docs.rs/egg-stats/)
+[![Crates.io Version](https://img.shields.io/crates/v/egg-viz?label=egg-viz)](https://crates.io/crates/egg-viz)
 
 ## About
 
