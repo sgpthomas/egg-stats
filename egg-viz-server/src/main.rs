@@ -1,6 +1,8 @@
 mod cli;
 mod handlers;
 mod watcher;
+#[cfg(not(debug_assertions))]
+mod webfiles;
 
 use anyhow::anyhow;
 use std::{
@@ -15,13 +17,19 @@ use handlers::{available, download, ws};
 use walkdir::{DirEntry, WalkDir};
 use warp::Filter;
 
-trait HasExtension {
+pub trait HasExtension {
     fn has_extension(&self, extension: impl AsRef<str>) -> bool;
+}
+
+impl HasExtension for Path {
+    fn has_extension(&self, extension: impl AsRef<str>) -> bool {
+        self.extension().and_then(OsStr::to_str) == Some(extension.as_ref())
+    }
 }
 
 impl HasExtension for DirEntry {
     fn has_extension(&self, extension: impl AsRef<str>) -> bool {
-        self.path().extension().and_then(OsStr::to_str) == Some(extension.as_ref())
+        self.path().has_extension(extension)
     }
 }
 
@@ -116,12 +124,33 @@ async fn main() {
         .and(with_known_files(known_files.clone()))
         .and_then(ws::handler);
 
-    let routes = available
-        .or(download)
-        .or(ws_route)
-        .with(warp::cors().allow_any_origin());
+    let routes = available.or(download).or(ws_route);
 
-    warp::serve(routes).run(([127, 0, 0, 1], 8080)).await;
+    #[cfg(not(debug_assertions))]
+    {
+        println!("production mode");
+        let routes = routes
+            .or(webfiles::routes())
+            .or(warp::path::end()
+                .map(|| warp::redirect(warp::http::Uri::from_static("/index.html"))))
+            .with(warp::cors().allow_any_origin());
+
+        if webbrowser::open("http://localhost:8080").is_err() {
+            println!("Unable to open webbrowser.");
+            println!("Server is running on `http://localhost:8080");
+        }
+
+        warp::serve(routes).run(([127, 0, 0, 1], 8080)).await;
+        return;
+    }
+
+    #[cfg(debug_assertions)]
+    {
+        println!("development mode");
+        let routes = routes.with(warp::cors().allow_any_origin());
+        warp::serve(routes).run(([127, 0, 0, 1], 8080)).await;
+        return;
+    }
 }
 
 #[allow(unused)]

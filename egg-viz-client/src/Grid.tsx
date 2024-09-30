@@ -23,11 +23,21 @@ export function Grid({
   stroke?: string;
 }) {
   const xTicks = useMemo(() => {
-    return xScale.ticks(xNTicks).map((value) => xScale(value));
+    const width = Math.abs(
+      (xScale.domain()[0] ?? 100) - (xScale.domain()[1] ?? 0),
+    );
+    return xScale
+      .ticks(2 * Math.trunc(Math.log10(width)))
+      .map((value) => xScale(value));
   }, [xScale.domain().join("-"), xScale.range().join("-"), xNTicks]);
 
   const yTicks = useMemo(() => {
-    return yScale.ticks(yNTicks).map((value) => yScale(value));
+    const width = Math.abs(
+      (yScale.domain()[0] ?? 100) - (yScale.domain()[1] ?? 0),
+    );
+    return yScale
+      .ticks(1.2 * Math.trunc(Math.log10(width)))
+      .map((value) => yScale(value));
   }, [yScale.domain().join("-"), yScale.range().join("-"), yNTicks]);
 
   return (

@@ -2,6 +2,13 @@
 name = "egg-stats"
 version = "0.1.0"
 edition = "2021"
+description = "Generate and view statistics for egg e-graphs"
+homepage = "https://github.com/sgpthomas/egg-stats"
+repository = "https://github.com/sgpthomas/egg-stats"
+readme = "README.md"
+exclude = [
+        "egg-viz-client/*"
+]
 
 [workspace]
 members = [
