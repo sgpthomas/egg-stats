@@ -8,7 +8,8 @@ export default function usePersistState<T>(
   serialize: (x: T) => string = JSON.stringify,
   deserialize: (x: string) => T = JSON.parse,
 ): [T, (new_state: T) => void] {
-  const [state, setState] = useState(initial_value);
+  const [state, setState] = useState<T>(initial_value);
+  const [loaded, setLoaded] = useState(false);
 
   // Load state from local storage
   useEffect(() => {
@@ -17,9 +18,13 @@ export default function usePersistState<T>(
     if (local_storage_value_str) {
       setState(deserialize(local_storage_value_str));
     }
+
+    setLoaded(true);
   }, []);
 
   const wrapSetState = (x: T) => {
+    if (!loaded) return;
+
     const state_str = serialize(x); // Stringified state
     localStorage.setItem("state:" + id, state_str); // Set stringified state as item in localStorage
     setState(x);

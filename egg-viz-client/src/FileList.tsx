@@ -1,10 +1,10 @@
 import * as d3 from "d3";
 import * as fa6 from "react-icons/fa6";
 import * as convert from "color-convert";
-import { AvailableResponse } from "./App";
 import { PropsWithChildren, useMemo } from "react";
 import usePersistState from "./usePersistState";
 import { PivotTable } from "./DataProcessing";
+import { useKnownFiles, useTables } from "./Fetch";
 import { UseQueryResult } from "@tanstack/react-query";
 
 function CollapseDiv(props: PropsWithChildren<{ expanded: boolean }>) {
@@ -26,6 +26,85 @@ function darkenColor(color?: string): string | undefined {
   return `#${convert.hsl.hex([hue, sat, light / 1.3])}`;
 }
 
+function FileItemLoaded({
+  table,
+  onRule,
+}: {
+  table: PivotTable;
+  onRule: (rule: string | null) => void;
+}) {
+  const [selRule, setSelRul] = usePersistState<string | null>(
+    null,
+    `file-item-sel-rule-${table.file_id}`,
+  );
+
+  // TODO move this into pivot table
+  const ruleList: Set<string> = useMemo(() => {
+    if (!table) return new Set();
+    const uniqueRules: Set<string> = PivotTable.map(
+      table,
+      (row) => row.rule,
+    ).reduce((acc: Set<string>, el: string) => {
+      acc.add(el);
+      return acc;
+    }, new Set());
+    return uniqueRules;
+  }, [table]);
+
+  return (
+    <div className="mt-1 space-y-1">
+      {table && (
+        <>
+          <div className="font-bold">Value names:</div>
+          <div className="flex flex-row flex-wrap gap-[0.75px]">
+            {table.value_names.map((value, idx) => (
+              <div
+                key={idx}
+                className="border-2 rounded-md border-egg-400 bg-egg-300 px-1 shadow-inner"
+              >
+                {value}
+              </div>
+            ))}
+          </div>{" "}
+        </>
+      )}
+      <div className="font-bold">
+        {ruleList?.size} {ruleList?.size > 1 ? "rules" : "rule"} used:
+      </div>
+      <div className="border-2 border-egg-400 bg-egg-300 rounded-md shadow-inner">
+        {ruleList && (
+          <div className="h-28 overflow-scroll">
+            {[...ruleList.values()].map((rule, idx) => {
+              return (
+                <div key={idx}>
+                  <button
+                    className={[
+                      "w-full text-left pl-2",
+                      selRule === rule && "bg-eggshell-400",
+                    ].join(" ")}
+                    key={idx}
+                    onMouseDown={(_) => {
+                      if (selRule === rule) {
+                        setSelRul(null);
+                        onRule(null);
+                      } else {
+                        setSelRul(rule);
+                        onRule(rule);
+                      }
+                    }}
+                  >
+                    {rule}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function FileItem({
   path,
   id,
@@ -38,7 +117,7 @@ function FileItem({
 }: {
   path: string;
   id: number;
-  table?: PivotTable;
+  table?: UseQueryResult<PivotTable>;
   onSelect: (id: number) => void;
   open: boolean;
   selected: Set<number>;
@@ -46,22 +125,6 @@ function FileItem({
   onRule: (rule: string | null) => void;
 }) {
   const [exp, setExp] = usePersistState<boolean>(false, `file-item-${id}`);
-  const [selRule, setSelRul] = usePersistState<string | null>(
-    null,
-    `file-item-sel-rule-${id}`,
-  );
-
-  const ruleList: Set<string> = useMemo(() => {
-    if (!table) return new Set();
-    const uniqueRules: Set<string> = PivotTable.map(
-      table,
-      (row) => row.rule,
-    ).reduce((acc: Set<string>, el: string) => {
-      acc.add(el);
-      return acc;
-    }, new Set());
-    return uniqueRules;
-  }, [table?.file_id]);
 
   return (
     <li key={id}>
@@ -127,56 +190,11 @@ function FileItem({
         </div>
         {open && (
           <CollapseDiv expanded={exp}>
-            <div className="mt-1 space-y-1">
-              {table && (
-                <>
-                  <div className="font-bold">Value names:</div>
-                  <div className="flex flex-row flex-wrap gap-[0.75px]">
-                    {table.value_names.map((value, idx) => (
-                      <div
-                        key={idx}
-                        className="border-2 rounded-md border-egg-400 bg-egg-300 px-1 shadow-inner"
-                      >
-                        {value}
-                      </div>
-                    ))}
-                  </div>{" "}
-                </>
-              )}
-              <div className="font-bold">
-                {ruleList?.size} {ruleList?.size > 1 ? "rules" : "rule"} used:
-              </div>
-              <div className="border-2 border-egg-400 bg-egg-300 rounded-md shadow-inner">
-                {ruleList && (
-                  <div className="h-28 overflow-scroll">
-                    {[...ruleList.values()].map((rule, idx) => {
-                      return (
-                        <div key={idx}>
-                          <button
-                            className={[
-                              "w-full text-left pl-2",
-                              selRule === rule && "bg-eggshell-400",
-                            ].join(" ")}
-                            key={idx}
-                            onMouseDown={(_) => {
-                              if (selRule === rule) {
-                                setSelRul(null);
-                                onRule(null);
-                              } else {
-                                setSelRul(rule);
-                                onRule(rule);
-                              }
-                            }}
-                          >
-                            {rule}
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
+            {table && table.data ? (
+              <FileItemLoaded table={table.data} onRule={onRule} />
+            ) : (
+              "Loading"
+            )}
           </CollapseDiv>
         )}
       </div>
@@ -185,22 +203,21 @@ function FileItem({
 }
 
 export function FileList({
-  knownFiles,
-  tables,
   onSelect,
   open,
   selected,
   colors = d3.schemeAccent,
   onRuleChange = (_i, _r) => {},
 }: {
-  knownFiles: UseQueryResult<AvailableResponse>;
-  tables?: PivotTable[];
   onSelect: (id: number) => void;
   open: boolean;
   selected: Set<number>;
   colors?: readonly string[];
   onRuleChange?: (id: number, rule: string | null) => void;
 }) {
+  const knownFiles = useKnownFiles();
+  const tables = useTables({});
+
   if (knownFiles.isPending)
     return (
       <div className="p-1 bg-egg-300 rounded-md flex space-x-1 items-center animate-subtle-pulse justify-center">
@@ -246,7 +263,9 @@ export function FileList({
           key={idx}
           id={id}
           path={path}
-          table={tables?.find((table) => table.file_id === id)}
+          table={tables.find(
+            (query) => query.data && query.data.file_id === id,
+          )}
           onSelect={onSelect}
           open={open}
           selected={selected}

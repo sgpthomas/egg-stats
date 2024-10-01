@@ -22,6 +22,7 @@ export function Sidebar(props: PropsWithChildren<Props>) {
           "max-h-screen",
           "px-2",
           "py-4",
+          "overflow-x-hidden",
           "overflow-y-auto",
           "bg-egg-200",
           "drop-shadow-md",

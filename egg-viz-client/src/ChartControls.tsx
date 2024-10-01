@@ -1,5 +1,4 @@
 import { Point } from "./Chart";
-import usePersistState from "./usePersistState";
 import * as fa6 from "react-icons/fa6";
 import {
   FloatingPortal,
@@ -8,7 +7,10 @@ import {
   useFloating,
   useInteractions,
 } from "@floating-ui/react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { useTables } from "./Fetch";
+import { PivotTable, setIntersect } from "./DataProcessing";
+import { UseQueryResult } from "@tanstack/react-query";
 
 function ButtonGroup<T>({
   options,
@@ -59,34 +61,114 @@ function ButtonGroup<T>({
   );
 }
 
+function RangeSelect({
+  label,
+  range,
+  computed,
+  onChange = (_) => {},
+}: {
+  label: string;
+  range: [number?, number?];
+  computed: [number, number];
+  onChange?: (r: [number?, number?]) => void;
+}) {
+  const inputClasses = [
+    "max-w-16",
+    "bg-egg-300",
+    "border-b-[1.5px]",
+    "border-black",
+    "h-5",
+    "text-md",
+    "appearance-none",
+  ];
+  return (
+    <span className="space-x-1 text-md flex items-center">
+      <input
+        value={range[0] ?? computed[0]}
+        type="number"
+        className={inputClasses.concat(["text-end"]).join(" ")}
+        onChange={(e) => {
+          onChange([
+            e.target.value === "" ? computed[0] : e.target.valueAsNumber,
+            range[1],
+          ]);
+        }}
+      />
+      <span>&le; {label} &le;</span>
+      <input
+        value={range[1] ?? computed[1]}
+        type="number"
+        className={inputClasses.concat(["text-start"]).join(" ")}
+        onChange={(e) => {
+          onChange([
+            range[0],
+            e.target.value === "" ? computed[1] : e.target.valueAsNumber,
+          ]);
+        }}
+      />
+    </span>
+  );
+}
+
 export class ChartOptions {
   scaleType: Point<"linear" | "log">;
   nTicks: Point<number>;
   drawLine: boolean;
   columns: Point<string>;
+  locked: boolean;
+  userRange: Point<[number?, number?]>;
+  computedRange: Point<[number, number]>;
 
   constructor(other?: ChartOptions) {
     this.scaleType = other?.scaleType ?? { x: "linear", y: "linear" };
     this.nTicks = other?.nTicks ?? { x: 100, y: 100 };
     this.drawLine = other?.drawLine ?? true;
     this.columns = other?.columns ?? { x: "index", y: "cost" };
+    this.locked = other?.locked ?? false;
+    this.userRange = other?.userRange ?? {
+      x: [undefined, undefined],
+      y: [undefined, undefined],
+    };
+    this.computedRange = other?.computedRange ?? {
+      x: [0, 100],
+      y: [0, 100],
+    };
+  }
+
+  static range(self: ChartOptions): Point<[number, number]> {
+    if (self.locked) {
+      return {
+        x: [
+          self.userRange.x[0] ?? self.computedRange.x[0],
+          self.userRange.x[1] ?? self.computedRange.x[1],
+        ],
+        y: [
+          self.userRange.y[0] ?? self.computedRange.y[0],
+          self.userRange.y[1] ?? self.computedRange.y[1],
+        ],
+      };
+    } else {
+      return self.computedRange;
+    }
+  }
+
+  static lockRange(self: ChartOptions, locked: boolean) {
+    self.locked = locked;
+    if (!locked) {
+      self.userRange = structuredClone(self.computedRange);
+    }
   }
 }
 
 export function ChartControls({
-  onChange,
-  columnValues,
+  ctrls,
+  setCtrls,
   open,
 }: {
-  onChange: (x: ChartOptions) => void;
-  columnValues: string[];
+  ctrls: ChartOptions;
+  setCtrls: (x: ChartOptions) => void;
   open: boolean;
 }) {
-  const [ctrls, setCtrls] = usePersistState<ChartOptions>(
-    new ChartOptions(),
-    "chart-options",
-  );
-
   const scales = (
     <div
       id="control-scaleType"
@@ -98,8 +180,53 @@ export function ChartControls({
         </span>
         <span>Scales:</span>
       </div>
+      <div className="space-x-1 truncate overflow-hidden">
+        <span>Scale to fit:</span>
+        <input
+          type="checkbox"
+          checked={!ctrls.locked}
+          onChange={(_) => {
+            ChartOptions.lockRange(ctrls, !ctrls.locked);
+            setCtrls(new ChartOptions(ctrls));
+          }}
+        />
+      </div>
+      <div
+        className={[
+          "transition-opacity",
+          !ctrls.locked && "opacity-50",
+          "w-max",
+        ].join(" ")}
+      >
+        <RangeSelect
+          range={ctrls.userRange.x}
+          computed={ctrls.computedRange.x}
+          label="x"
+          onChange={(v) => {
+            ctrls.userRange.x = v;
+            setCtrls(new ChartOptions(ctrls));
+          }}
+        />
+      </div>
+      <div
+        className={[
+          "transition-opacity",
+          !ctrls.locked && "opacity-50",
+          "w-max",
+        ].join(" ")}
+      >
+        <RangeSelect
+          range={ctrls.userRange.y}
+          computed={ctrls.computedRange.y}
+          label="y"
+          onChange={(v) => {
+            ctrls.userRange.y = v;
+            setCtrls(new ChartOptions(ctrls));
+          }}
+        />
+      </div>
       <div className="space-x-2 w-max">
-        <span className="inline-block w-4">X:</span>
+        <span>X: </span>
         <ButtonGroup<"linear" | "log">
           options={["linear", "log"]}
           value={ctrls.scaleType.x}
@@ -107,12 +234,11 @@ export function ChartControls({
             const c = new ChartOptions(ctrls);
             c.scaleType.x = v;
             setCtrls(c);
-            onChange(c);
           }}
         />
       </div>
       <div className="space-x-2 w-max">
-        <span className="inline-block w-4">Y:</span>
+        <span>Y: </span>
         <ButtonGroup<"linear" | "log">
           options={["linear", "log"]}
           value={ctrls.scaleType.y}
@@ -120,12 +246,20 @@ export function ChartControls({
             const c = new ChartOptions(ctrls);
             c.scaleType.y = v;
             setCtrls(c);
-            onChange(c);
           }}
         />
       </div>
     </div>
   );
+
+  const columnValues = useTables({
+    select: useCallback((table: PivotTable) => table.value_names, []),
+    combine: (queries: UseQueryResult<string[]>[]) =>
+      queries
+        ?.filter((t) => !!t.data)
+        .map((t) => t.data)
+        .reduce<string[] | undefined>(setIntersect, undefined) ?? [],
+  });
 
   const columns = (
     <div
@@ -145,7 +279,6 @@ export function ChartControls({
             const c = new ChartOptions(ctrls);
             c.columns.x = e.target.value;
             setCtrls(c);
-            onChange(c);
           }}
           value={ctrls.columns.x}
           className="rounded-md px-2 py-[0.75px] hover:bg-eggshell-hover hover:text-white"
@@ -165,7 +298,6 @@ export function ChartControls({
             const c = new ChartOptions(ctrls);
             c.columns.y = e.target.value;
             setCtrls(c);
-            onChange(c);
           }}
           value={ctrls.columns.y}
           className="rounded-md px-2 py-[0.75px] hover:bg-eggshell-hover hover:text-white"
@@ -196,7 +328,6 @@ export function ChartControls({
             const c = new ChartOptions(ctrls);
             c.drawLine = !ctrls.drawLine;
             setCtrls(c);
-            onChange(c);
           }}
           className={[
             "rounded-md",

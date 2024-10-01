@@ -1,4 +1,11 @@
-import { ReactElement, useMemo, MouseEvent, useState } from "react";
+import {
+  ReactElement,
+  useMemo,
+  MouseEvent,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import { ChartSettings, useChartDimensions } from "./useChartDimensions";
 import * as d3 from "d3";
 import { PivotTable } from "./DataProcessing";
@@ -12,6 +19,8 @@ import {
 import { XAxis, YAxis } from "./Axis";
 import { Grid } from "./Grid";
 import { ChartOptions } from "./ChartControls";
+import { useTables } from "./Fetch";
+import { UseQueryResult } from "@tanstack/react-query";
 
 export interface Point<T = number> {
   x: T;
@@ -125,20 +134,20 @@ function DataPoint({
 }
 
 export function Chart({
-  tables,
+  selected,
   ctrls,
+  setCtrls,
   marginLeft,
   colors = d3.schemeAccent,
   selectedRules = new Map(),
 }: {
-  tables?: PivotTable[];
+  selected: Set<number>;
   ctrls: ChartOptions;
+  setCtrls: (x: ChartOptions) => void;
   marginLeft: number;
   colors?: readonly string[];
   selectedRules?: Map<number, string | null>;
 }) {
-  // const colors = useMemo(() => d3.scaleOrdinal(d3.schemeAccent), []);
-
   const chartSettings: ChartSettings = {
     marginLeft: marginLeft,
     marginRight: 0,
@@ -146,42 +155,54 @@ export function Chart({
 
   const [ref, dms] = useChartDimensions(chartSettings);
 
-  const lines: [number, Point[]][] = useMemo(
-    () =>
-      tables?.map((table) => [
+  const lines: UseQueryResult<[number, Point[]]>[] = useTables({
+    select: useCallback(
+      (table: PivotTable) => [
         table.file_id,
         points(table, ctrls.columns.x, ctrls.columns.y),
-      ]) ?? [],
-    [tables, ctrls],
-  );
+      ],
+      [ctrls.columns.x, ctrls.columns.y],
+    ),
+  });
 
-  const [maxX, maxY] = useMemo(() => {
-    if (lines.length === 0) return [99, 99];
-    const maxX = Math.max(
-      ...lines.map(([_, line]) => d3.max(line, (pt) => pt.x) ?? 100),
-    );
-    const maxY = Math.max(
-      ...lines.map(([_, line]) => d3.max(line, (pt) => pt.y) ?? 100),
-    );
-    return [maxX, maxY];
-  }, [lines]);
+  const [maxX, maxY]: [number, number] = useTables({
+    select: useCallback(
+      (table: PivotTable) => {
+        if (!selected.has(table.file_id)) return [1, 1];
+        const line = points(table, ctrls.columns.x, ctrls.columns.y);
+        return [d3.max(line, (pt) => pt.x), d3.max(line, (pt) => pt.y)];
+      },
+      [ctrls.columns.x, ctrls.columns.y, selected],
+    ),
+    combine: (queries) => {
+      const maxes = queries.filter((q) => !!q.data).map((q) => q.data);
+      return [
+        d3.max(maxes, (m) => m[0]) ?? 100,
+        d3.max(maxes, (m) => m[1]) ?? 100,
+      ];
+    },
+  });
 
-  const xScale = useMemo(
-    () =>
-      toD3Scale(ctrls.scaleType.x, [
-        lowerBound(ctrls.scaleType.x),
-        scaleBound(maxX),
-      ]).range([0, dms.boundedWidth]),
-    [dms.boundedWidth, ctrls.scaleType.x, maxX],
-  );
+  useEffect(() => {
+    ctrls.computedRange.x[1] = scaleBound(maxX);
+    ctrls.computedRange.y[1] = scaleBound(maxY);
+    setCtrls(new ChartOptions(ctrls));
+  }, [maxX, maxY]);
+
+  const xScale = useMemo(() => {
+    return toD3Scale(ctrls.scaleType.x, [
+      lowerBound(ctrls.scaleType.x),
+      scaleBound(ChartOptions.range(ctrls).x[1]),
+    ]).range([0, dms.boundedWidth]);
+  }, [dms.boundedWidth, ctrls.scaleType.x, ChartOptions.range(ctrls).x[1]]);
 
   const yScale = useMemo(
     () =>
       toD3Scale(ctrls.scaleType.y, [
-        scaleBound(maxY),
+        scaleBound(ChartOptions.range(ctrls).y[1]),
         lowerBound(ctrls.scaleType.y),
       ]).range([0, dms.boundedHeight]),
-    [dms.boundedHeight, ctrls.scaleType.y, maxY],
+    [dms.boundedHeight, ctrls.scaleType.y, ChartOptions.range(ctrls).y[1]],
   );
 
   const line = useMemo(
@@ -222,45 +243,49 @@ export function Chart({
           <g transform={`translate(0, ${dms.boundedHeight})`}>
             <XAxis scale={xScale} label={ctrls.columns.x} />
           </g>
-          {lines?.map(([id, child], idx) => (
-            <g key={idx}>
-              {ctrls.drawLine ? (
-                <path
-                  fill="none"
-                  stroke={colors[id]}
-                  strokeWidth={2.0}
-                  d={line(child) ?? undefined}
-                />
-              ) : null}
+          {lines
+            .filter((q) => !!q.data)
+            .map((q) => q.data)
+            .filter(([id, _]) => selected.has(id))
+            .map(([id, child], idx) => (
+              <g key={idx}>
+                {ctrls.drawLine ? (
+                  <path
+                    fill="none"
+                    stroke={colors[id]}
+                    strokeWidth={2.0}
+                    d={line(child) ?? undefined}
+                  />
+                ) : null}
 
-              {child.map((pt, ptidx) => (
-                <DataPoint
-                  key={`${idx}-${ptidx}`}
-                  fill={colors[id]}
-                  point={{ x: xScale(pt.x), y: yScale(pt.y) }}
-                  selected={selectedRules.get(id) == pt.rule}
-                  onHover={(e, h) => {
-                    if (!h) {
-                      tooltip.set(undefined);
-                      return;
-                    }
+                {child.map((pt, ptidx) => (
+                  <DataPoint
+                    key={`${idx}-${ptidx}`}
+                    fill={colors[id]}
+                    point={{ x: xScale(pt.x), y: yScale(pt.y) }}
+                    selected={selectedRules.get(id) == pt.rule}
+                    onHover={(e, h) => {
+                      if (!h) {
+                        tooltip.set(undefined);
+                        return;
+                      }
 
-                    tooltip.set({
-                      pos: {
-                        x: e.clientX,
-                        y: e.clientY,
-                      },
-                      content: (
-                        <>
-                          x: {pt.x.toFixed(2)} y: {pt.y.toFixed(2)}
-                        </>
-                      ),
-                    });
-                  }}
-                />
-              ))}
-            </g>
-          ))}
+                      tooltip.set({
+                        pos: {
+                          x: e.clientX,
+                          y: e.clientY,
+                        },
+                        content: (
+                          <>
+                            x: {pt.x.toFixed(2)} y: {pt.y.toFixed(2)}
+                          </>
+                        ),
+                      });
+                    }}
+                  />
+                ))}
+              </g>
+            ))}
         </g>
       </svg>
     </div>

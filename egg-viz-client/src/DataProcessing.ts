@@ -25,7 +25,10 @@ export function setAdd<T>(set: T[], item: T): T[] {
   return set;
 }
 
-export function setIntersect<T>(set0: T[], set1: T[]): T[] {
+export function setIntersect<T>(set0?: T[], set1?: T[]): T[] {
+  if (!set0) return set1 ?? [];
+  if (!set1) return set0;
+
   const res: T[] = [];
 
   for (const x0 of set0) {
