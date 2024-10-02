@@ -169,15 +169,15 @@ export function Chart({
 
   const [ref, dms] = useChartDimensions(chartSettings);
 
-  const lines: UseQueryResult<[number, DataPoint[]]>[] = useTables({
-    select: useCallback(
-      (table: PivotTable) => [
-        table.file_id,
-        points(table, ctrls.columns.x, ctrls.columns.y),
-      ],
-      [ctrls.columns.x, ctrls.columns.y],
-    ),
-  });
+  // const lines: UseQueryResult<[number, DataPoint[]]>[] = useTables({
+  //   select: useCallback(
+  //     (table: PivotTable) => [
+  //       table.file_id,
+  //       points(table, ctrls.columns.x, ctrls.columns.y),
+  //     ],
+  //     [ctrls.columns.x, ctrls.columns.y],
+  //   ),
+  // });
 
   const [maxX, maxY]: [number, number] = useTables({
     select: useCallback(
@@ -251,6 +251,192 @@ export function Chart({
 
   const tooltip = useTooltip();
 
+  // {ctrls.drawLine ? (
+  //           <>
+  //             <path
+  //               fill="none"
+  //               stroke={colors[id]}
+  //               strokeWidth={selectedRules.get(id) !== null ? 1.0 : 2.0}
+  //               d={line(child) ?? undefined}
+  //             />
+  //             <path
+  //               fill="none"
+  //               stroke={colors[id]}
+  //               strokeWidth={5.0}
+  //               d={
+  //                 selectedRules.get(id) !== null
+  //                   ? (highlightLine(child) ?? undefined)
+  //                   : undefined
+  //               }
+  //             />
+  //           </>
+  //         ) : null}
+
+  const renderedLines: UseQueryResult<[number, ReactElement]>[] = useTables({
+    select: useCallback(
+      (table: PivotTable) => {
+        const data = points(table, ctrls.columns.x, ctrls.columns.y);
+
+        const el = (
+          <>
+            <path
+              fill="none"
+              stroke={colors[table.file_id]}
+              strokeWidth={
+                selectedRules.get(table.file_id) !== null ? 1.0 : 2.0
+              }
+              d={line(data) ?? undefined}
+            />
+            <path
+              fill="none"
+              stroke={colors[table.file_id]}
+              strokeWidth={5.0}
+              d={
+                selectedRules.get(table.file_id) !== null
+                  ? (highlightLine(data) ?? undefined)
+                  : undefined
+              }
+            />
+          </>
+        );
+
+        return [table.file_id, el];
+      },
+      [ctrls.columns.x, ctrls.columns.y, line, selectedRules],
+    ),
+  });
+
+  const renderedPoints: UseQueryResult<[number, ReactElement, ReactElement]>[] =
+    useTables({
+      select: useCallback(
+        (table: PivotTable) => {
+          console.log(`re-rendering points for ${table.file_id}`);
+
+          const data = points(table, ctrls.columns.x, ctrls.columns.y);
+          const rawPts = (
+            <g key={`datapoints-${table.file_id}`}>
+              {data.map((d, ptidx) => (
+                <DataPoint
+                  key={`${table.file_id}-${ptidx}`}
+                  fill={colors[table.file_id]}
+                  point={{ x: xScale(d.pt.x), y: yScale(d.pt.y) }}
+                  onHover={(e, h) => {
+                    if (!h) {
+                      tooltip.set(undefined);
+                      return;
+                    }
+
+                    tooltip.set({
+                      pos: {
+                        x: e.clientX,
+                        y: e.clientY,
+                      },
+                      content: (
+                        <div className="flex flex-col">
+                          {d.rule && <span>rule: {d.rule}</span>}
+                          <span>
+                            x: {d.pt.x.toFixed(2)} y: {d.pt.y.toFixed(2)}
+                          </span>
+                        </div>
+                      ),
+                    });
+                  }}
+                />
+              ))}
+            </g>
+          );
+
+          const dimPts = (
+            <g key={`datapoints-${table.file_id}`}>
+              {data.map((d, ptidx) => (
+                <DataPoint
+                  key={`${table.file_id}-${ptidx}`}
+                  fill={colors[table.file_id]}
+                  point={{ x: xScale(d.pt.x), y: yScale(d.pt.y) }}
+                  highlight={true}
+                  onHover={(e, h) => {
+                    if (!h) {
+                      tooltip.set(undefined);
+                      return;
+                    }
+
+                    tooltip.set({
+                      pos: {
+                        x: e.clientX,
+                        y: e.clientY,
+                      },
+                      content: (
+                        <div className="flex flex-col">
+                          {d.rule && <span>rule: {d.rule}</span>}
+                          <span>
+                            x: {d.pt.x.toFixed(2)} y: {d.pt.y.toFixed(2)}
+                          </span>
+                        </div>
+                      ),
+                    });
+                  }}
+                />
+              ))}
+            </g>
+          );
+
+          return [table.file_id, rawPts, dimPts];
+        },
+        [ctrls.columns.x, ctrls.columns.y, xScale, yScale],
+      ),
+    });
+
+  const selectedPoints: UseQueryResult<[number, ReactElement | undefined]>[] =
+    useTables({
+      select: useCallback(
+        (table: PivotTable) => {
+          const selRule = selectedRules.get(table.file_id);
+          if (selRule === null) return [table.file_id, undefined];
+
+          const data = points(table, ctrls.columns.x, ctrls.columns.y).filter(
+            (dp) => dp.rule === selRule,
+          );
+
+          const el = (
+            <g key={`selected-datapoints-${table.file_id}`}>
+              {data.map((d, ptidx) => (
+                <DataPoint
+                  key={`selected-${table.file_id}-${ptidx}`}
+                  fill={colors[table.file_id]}
+                  point={{ x: xScale(d.pt.x), y: yScale(d.pt.y) }}
+                  selected={true}
+                  onHover={(e, h) => {
+                    if (!h) {
+                      tooltip.set(undefined);
+                      return;
+                    }
+
+                    tooltip.set({
+                      pos: {
+                        x: e.clientX,
+                        y: e.clientY,
+                      },
+                      content: (
+                        <div className="flex flex-col">
+                          {d.rule && <span>rule: {d.rule}</span>}
+                          <span>
+                            x: {d.pt.x.toFixed(2)} y: {d.pt.y.toFixed(2)}
+                          </span>
+                        </div>
+                      ),
+                    });
+                  }}
+                />
+              ))}
+            </g>
+          );
+
+          return [table.file_id, el];
+        },
+        [ctrls.columns.x, ctrls.columns.y, selectedRules, xScale, yScale],
+      ),
+    });
+
   return (
     <div ref={ref} className="h-screen bg-egg">
       <div
@@ -277,65 +463,24 @@ export function Chart({
           <g transform={`translate(0, ${dms.boundedHeight})`}>
             <XAxis scale={xScale} label={ctrls.columns.x} />
           </g>
-          {lines
+          {ctrls.drawLine &&
+            renderedLines
+              .filter((q) => !!q.data)
+              .map((q) => q.data)
+              .filter(([id, _]) => selected.has(id))
+              .map(([_, lines]) => lines)}
+          {renderedPoints
             .filter((q) => !!q.data)
             .map((q) => q.data)
             .filter(([id, _]) => selected.has(id))
-            .map(([id, child], idx) => (
-              <g key={idx}>
-                {ctrls.drawLine ? (
-                  <>
-                    <path
-                      fill="none"
-                      stroke={colors[id]}
-                      strokeWidth={selectedRules.get(id) !== null ? 1.0 : 2.0}
-                      d={line(child) ?? undefined}
-                    />
-                    <path
-                      fill="none"
-                      stroke={colors[id]}
-                      strokeWidth={5.0}
-                      d={
-                        selectedRules.get(id) !== null
-                          ? (highlightLine(child) ?? undefined)
-                          : undefined
-                      }
-                    />
-                  </>
-                ) : null}
-
-                {child.map((d, ptidx) => (
-                  <DataPoint
-                    key={`${idx}-${ptidx}`}
-                    fill={colors[id]}
-                    point={{ x: xScale(d.pt.x), y: yScale(d.pt.y) }}
-                    selected={selectedRules.get(id) === d.rule}
-                    highlight={selectedRules.get(id) !== null}
-                    onHover={(e, h) => {
-                      if (!h) {
-                        tooltip.set(undefined);
-                        return;
-                      }
-
-                      tooltip.set({
-                        pos: {
-                          x: e.clientX,
-                          y: e.clientY,
-                        },
-                        content: (
-                          <div className="flex flex-col">
-                            {d.rule && <span>rule: {d.rule}</span>}
-                            <span>
-                              x: {d.pt.x.toFixed(2)} y: {d.pt.y.toFixed(2)}
-                            </span>
-                          </div>
-                        ),
-                      });
-                    }}
-                  />
-                ))}
-              </g>
-            ))}
+            .map(([id, rawPts, dimPts]) =>
+              selectedRules.get(id) === null ? rawPts : dimPts,
+            )}
+          {selectedPoints
+            .filter((q) => !!q.data)
+            .map((q) => q.data)
+            .filter(([id, el]) => selected.has(id) && el)
+            .map(([_, el]) => el)}
         </g>
       </svg>
     </div>
