@@ -26,6 +26,7 @@ export interface Point<T = number> {
   x: T;
   y: T;
   rule?: string;
+  id?: number;
 }
 
 function scaleBound(input: number): number {
@@ -276,9 +277,12 @@ export function Chart({
                           y: e.clientY,
                         },
                         content: (
-                          <>
-                            x: {pt.x.toFixed(2)} y: {pt.y.toFixed(2)}
-                          </>
+                          <div className="flex flex-col">
+                            {pt.rule && <span>rule: {pt.rule}</span>}
+                            <span>
+                              x: {pt.x.toFixed(2)} y: {pt.y.toFixed(2)}
+                            </span>
+                          </div>
                         ),
                       });
                     }}
@@ -311,5 +315,6 @@ function points(
       x: xSel(row, idx),
       y: ySel(row, idx),
       rule: row["rule"],
+      id: table.file_id,
     }));
 }

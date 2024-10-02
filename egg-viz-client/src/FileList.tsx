@@ -6,6 +6,7 @@ import usePersistState from "./usePersistState";
 import { PivotTable } from "./DataProcessing";
 import { useKnownFiles, useTables } from "./Fetch";
 import { UseQueryResult } from "@tanstack/react-query";
+import { PiWaveSineBold } from "react-icons/pi";
 
 function CollapseDiv(props: PropsWithChildren<{ expanded: boolean }>) {
   return (
@@ -56,11 +57,11 @@ function FileItemLoaded({
       {table && (
         <>
           <div className="font-bold">Value names:</div>
-          <div className="flex flex-row flex-wrap gap-[0.75px]">
+          <div className="flex flex-row gap-[2px] overflow-x-auto no-scrollbar">
             {table.value_names.map((value, idx) => (
               <div
                 key={idx}
-                className="border-2 rounded-md border-egg-400 bg-egg-300 px-1 shadow-inner"
+                className="border-2 rounded-full border-egg-500 bg-egg-400 px-1 drop-shadow-sm"
               >
                 {value}
               </div>
@@ -138,7 +139,7 @@ function FileItem({
           "w-auto",
         ].join(" ")}
       >
-        <div className="flex">
+        <div className="flex relative">
           <input
             type="checkbox"
             checked={selected.has(id)}
@@ -160,8 +161,23 @@ function FileItem({
               "border-[5px]",
               "shadow-inner-lg",
               "transition-[background-color]",
+              "cursor-pointer",
+              "before:hover:border-[1px]",
+              "before:absolute",
+              "before:border-black",
+              "before:w-[26px]",
+              "before:h-[26px]",
+              "before:rounded-full",
+              "before:bottom-[-5px]",
+              "before:left-[-5px]",
             ].join(" ")}
-          ></div>
+          >
+            <PiWaveSineBold
+              className="absolute top-[1px] z-10"
+              size="15px"
+              color={darkenColor(colors[id])}
+            />
+          </div>
 
           {open ? (
             <>
@@ -193,7 +209,11 @@ function FileItem({
             {table && table.data ? (
               <FileItemLoaded table={table.data} onRule={onRule} />
             ) : (
-              "Loading"
+              <div className="p-1 mt-2 bg-egg-400 rounded-md flex space-x-1 items-center animate-subtle-pulse justify-center">
+                <span className="text-sm text-center font-bold truncate grow">
+                  Downloading
+                </span>
+              </div>
             )}
           </CollapseDiv>
         )}
