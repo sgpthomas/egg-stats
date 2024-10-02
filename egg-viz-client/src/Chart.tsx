@@ -312,7 +312,8 @@ export function Chart({
                         <div className="flex flex-col">
                           {d.rule && <span>rule: {d.rule}</span>}
                           <span>
-                            x: {d.pt.x.toFixed(2)} y: {d.pt.y.toFixed(2)}
+                            {ctrls.columns.x}: {d.pt.x.toFixed(2)}{" "}
+                            {ctrls.columns.y}: {d.pt.y.toFixed(2)}
                           </span>
                         </div>
                       ),
