@@ -249,36 +249,15 @@ export function Chart({
     [xScale, yScale],
   );
 
-  const tooltip = useTooltip();
-
-  // {ctrls.drawLine ? (
-  //           <>
-  //             <path
-  //               fill="none"
-  //               stroke={colors[id]}
-  //               strokeWidth={selectedRules.get(id) !== null ? 1.0 : 2.0}
-  //               d={line(child) ?? undefined}
-  //             />
-  //             <path
-  //               fill="none"
-  //               stroke={colors[id]}
-  //               strokeWidth={5.0}
-  //               d={
-  //                 selectedRules.get(id) !== null
-  //                   ? (highlightLine(child) ?? undefined)
-  //                   : undefined
-  //               }
-  //             />
-  //           </>
-  //         ) : null}
-
   const renderedLines: UseQueryResult<[number, ReactElement]>[] = useTables({
     select: useCallback(
       (table: PivotTable) => {
-        const data = points(table, ctrls.columns.x, ctrls.columns.y);
+        const data = points(table, ctrls.columns.x, ctrls.columns.y).filter(
+          (d) => !(isNaN(d.pt.x) || isNaN(d.pt.y)),
+        );
 
         const el = (
-          <>
+          <g key={`${table.file_id}-lines`}>
             <path
               fill="none"
               stroke={colors[table.file_id]}
@@ -297,12 +276,12 @@ export function Chart({
                   : undefined
               }
             />
-          </>
+          </g>
         );
 
         return [table.file_id, el];
       },
-      [ctrls.columns.x, ctrls.columns.y, line, selectedRules],
+      [ctrls.columns.x, ctrls.columns.y, line, highlightLine, selectedRules],
     ),
   });
 
@@ -310,14 +289,12 @@ export function Chart({
     useTables({
       select: useCallback(
         (table: PivotTable) => {
-          console.log(`re-rendering points for ${table.file_id}`);
-
           const data = points(table, ctrls.columns.x, ctrls.columns.y);
           const rawPts = (
-            <g key={`datapoints-${table.file_id}`}>
+            <g key={`raw-datapoints-${table.file_id}`}>
               {data.map((d, ptidx) => (
                 <DataPoint
-                  key={`${table.file_id}-${ptidx}`}
+                  key={`raw-${table.file_id}-${ptidx}`}
                   fill={colors[table.file_id]}
                   point={{ x: xScale(d.pt.x), y: yScale(d.pt.y) }}
                   onHover={(e, h) => {
@@ -347,10 +324,10 @@ export function Chart({
           );
 
           const dimPts = (
-            <g key={`datapoints-${table.file_id}`}>
+            <g key={`dim-datapoints-${table.file_id}`}>
               {data.map((d, ptidx) => (
                 <DataPoint
-                  key={`${table.file_id}-${ptidx}`}
+                  key={`dim-${table.file_id}-${ptidx}`}
                   fill={colors[table.file_id]}
                   point={{ x: xScale(d.pt.x), y: yScale(d.pt.y) }}
                   highlight={true}
@@ -385,6 +362,8 @@ export function Chart({
         [ctrls.columns.x, ctrls.columns.y, xScale, yScale],
       ),
     });
+
+  const tooltip = useTooltip();
 
   const selectedPoints: UseQueryResult<[number, ReactElement | undefined]>[] =
     useTables({
