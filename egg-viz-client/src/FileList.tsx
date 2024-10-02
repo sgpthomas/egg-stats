@@ -140,7 +140,7 @@ function FileItem({
           "w-auto",
           "cursor-pointer",
         ].join(" ")}
-        onMouseDown={(e) => {
+        onMouseDown={(_) => {
           if (open) {
             setExp(!exp);
           } else {

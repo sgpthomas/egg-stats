@@ -160,9 +160,9 @@ export function Chart({
     select: useCallback(
       (table: PivotTable) => [
         table.file_id,
-        points(table, ctrls.columns.x, ctrls.columns.y),
+        points(table, ctrls.columns.x, ctrls.columns.y, ctrls.when),
       ],
-      [ctrls.columns.x, ctrls.columns.y],
+      [ctrls.columns.x, ctrls.columns.y, ctrls.when],
     ),
   });
 
@@ -170,10 +170,15 @@ export function Chart({
     select: useCallback(
       (table: PivotTable) => {
         if (!selected.has(table.file_id)) return [1, 1];
-        const line = points(table, ctrls.columns.x, ctrls.columns.y);
+        const line = points(
+          table,
+          ctrls.columns.x,
+          ctrls.columns.y,
+          ctrls.when,
+        );
         return [d3.max(line, (pt) => pt.x), d3.max(line, (pt) => pt.y)];
       },
-      [ctrls.columns.x, ctrls.columns.y, selected],
+      [ctrls.columns.x, ctrls.columns.y, ctrls.when, selected],
     ),
     combine: (queries) => {
       const maxes = queries.filter((q) => !!q.data).map((q) => q.data);
@@ -300,6 +305,7 @@ function points(
   table?: PivotTable,
   xCol: string = "index",
   yCol: string = "cost",
+  when: string = "before_rewrite",
 ): Point[] {
   if (!table) return [];
 
@@ -310,7 +316,7 @@ function points(
   const ySel = sel(yCol);
 
   return PivotTable.map(table, (row) => row)
-    .filter((row) => row["when"] === "before_rewrite")
+    .filter((row) => row["when"] === when)
     .map((row, idx) => ({
       x: xSel(row, idx),
       y: ySel(row, idx),

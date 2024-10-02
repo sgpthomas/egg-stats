@@ -7,19 +7,21 @@ import {
   useFloating,
   useInteractions,
 } from "@floating-ui/react";
-import { useCallback, useState } from "react";
+import { PropsWithChildren, useCallback, useState } from "react";
 import { useTables } from "./Fetch";
 import { PivotTable, setIntersect } from "./DataProcessing";
 import { UseQueryResult } from "@tanstack/react-query";
 
 function ButtonGroup<T>({
   options,
+  labels = options as string[],
   value,
-  onChange,
+  onChange = (_) => {},
 }: {
   options: T[];
-  value: T;
-  onChange: (v: T) => void;
+  labels?: string[];
+  value?: T;
+  onChange?: (v: T) => void;
 }) {
   const rounded = (idx: number) => {
     if (idx === 0) {
@@ -54,7 +56,7 @@ function ButtonGroup<T>({
           ].join(" ")}
           onClick={(_) => onChange(opt)}
         >
-          {opt as string}
+          {labels[idx]}
         </button>
       ))}
     </span>
@@ -112,6 +114,7 @@ function RangeSelect({
 
 export class ChartOptions {
   scaleType: Point<"linear" | "log">;
+  when: "before_rewrite" | "after_rewrite";
   nTicks: Point<number>;
   drawLine: boolean;
   columns: Point<string>;
@@ -121,6 +124,7 @@ export class ChartOptions {
 
   constructor(other?: ChartOptions) {
     this.scaleType = other?.scaleType ?? { x: "linear", y: "linear" };
+    this.when = other?.when ?? "before_rewrite";
     this.nTicks = other?.nTicks ?? { x: 100, y: 100 };
     this.drawLine = other?.drawLine ?? true;
     this.columns = other?.columns ?? { x: "index", y: "cost" };
@@ -160,26 +164,117 @@ export class ChartOptions {
   }
 }
 
-export function ChartControls({
-  ctrls,
-  setCtrls,
-  open,
-}: {
+function ChartControlItem(props: PropsWithChildren<{}>) {
+  return (
+    <div className="border-[1px] border-egg-400 rounded-md p-2 space-y-[0.5px] w-full">
+      {props.children}
+    </div>
+  );
+}
+
+function ChartControlTitle({
+  label,
+  children,
+}: PropsWithChildren<{ label: string }>) {
+  return (
+    <div className="font-bold truncate flex items-center space-x-2">
+      <span>{children}</span>
+      <span>{label}:</span>
+    </div>
+  );
+}
+
+interface ChartControlProps {
   ctrls: ChartOptions;
   setCtrls: (x: ChartOptions) => void;
   open: boolean;
-}) {
-  const scales = (
-    <div
-      id="control-scaleType"
-      className="border-[1px] border-egg-400 rounded-md p-2 space-y-[0.5px] w-full"
-    >
-      <div className="font-bold truncate flex items-center space-x-2">
-        <span>
-          <fa6.FaChartLine />
-        </span>
-        <span>Scales:</span>
+}
+
+function ChartControlColumns({ ctrls, setCtrls }: ChartControlProps) {
+  const columnValues = useTables({
+    select: useCallback((table: PivotTable) => table.value_names, []),
+    combine: (queries: UseQueryResult<string[]>[]) =>
+      queries
+        ?.filter((t) => !!t.data)
+        .map((t) => t.data)
+        .reduce<string[] | undefined>(setIntersect, undefined) ?? [],
+  });
+
+  return (
+    <ChartControlItem>
+      <ChartControlTitle label="Column Types">
+        <fa6.FaTable />
+      </ChartControlTitle>
+      <div className="space-x-2 w-max">
+        <span className="inline-block w-4">X:</span>
+        <select
+          onChange={(e) => {
+            const c = new ChartOptions(ctrls);
+            c.columns.x = e.target.value;
+            setCtrls(c);
+          }}
+          value={ctrls.columns.x}
+          className="rounded-md px-2 py-[0.75px] hover:bg-eggshell-hover hover:text-white"
+        >
+          <option value="index">Index</option>
+          {columnValues.map((v) => (
+            <option key={`x-${v}`} value={v}>
+              {v}
+            </option>
+          ))}
+        </select>
       </div>
+      <div className="space-x-2 w-max">
+        <span className="inline-block w-4">Y:</span>
+        <select
+          onChange={(e) => {
+            const c = new ChartOptions(ctrls);
+            c.columns.y = e.target.value;
+            setCtrls(c);
+          }}
+          value={ctrls.columns.y}
+          className="rounded-md px-2 py-[0.75px] hover:bg-eggshell-hover hover:text-white"
+        >
+          <option value="index">Index</option>
+          {columnValues.map((v) => (
+            <option key={`y-${v}`} value={v}>
+              {v}
+            </option>
+          ))}
+        </select>
+      </div>
+    </ChartControlItem>
+  );
+}
+
+function ChartControlWhen({ ctrls, setCtrls }: ChartControlProps) {
+  return (
+    <ChartControlItem>
+      <ChartControlTitle label="When">
+        <fa6.FaRegClock />
+      </ChartControlTitle>
+      <div className="w-max">
+        <ButtonGroup<"before_rewrite" | "after_rewrite">
+          options={["before_rewrite", "after_rewrite"]}
+          labels={["Before", "After"]}
+          value={ctrls.when}
+          onChange={(v) => {
+            ctrls.when = v;
+            setCtrls(new ChartOptions(ctrls));
+          }}
+        />
+        <span className="ml-2">rewriting</span>
+      </div>
+    </ChartControlItem>
+  );
+}
+
+function ChartControlScale({ ctrls, setCtrls }: ChartControlProps) {
+  return (
+    <ChartControlItem>
+      <ChartControlTitle label="Scales">
+        <fa6.FaChartLine />
+      </ChartControlTitle>
       <div className="space-x-1 truncate overflow-hidden">
         <span>Scale to fit:</span>
         <input
@@ -249,80 +344,17 @@ export function ChartControls({
           }}
         />
       </div>
-    </div>
+    </ChartControlItem>
   );
+}
 
-  const columnValues = useTables({
-    select: useCallback((table: PivotTable) => table.value_names, []),
-    combine: (queries: UseQueryResult<string[]>[]) =>
-      queries
-        ?.filter((t) => !!t.data)
-        .map((t) => t.data)
-        .reduce<string[] | undefined>(setIntersect, undefined) ?? [],
-  });
-
-  const columns = (
-    <div
-      id="control-columns"
-      className="border-[1px] border-egg-400 rounded p-2 space-y-[0.5px] w-full"
-    >
-      <div className="font-bold truncate flex items-center space-x-2">
-        <span>
-          <fa6.FaTable />
-        </span>
-        <span>Column Types:</span>
-      </div>
-      <div className="space-x-2 w-max">
-        <span className="inline-block w-4">X:</span>
-        <select
-          onChange={(e) => {
-            const c = new ChartOptions(ctrls);
-            c.columns.x = e.target.value;
-            setCtrls(c);
-          }}
-          value={ctrls.columns.x}
-          className="rounded-md px-2 py-[0.75px] hover:bg-eggshell-hover hover:text-white"
-        >
-          <option value="index">Index</option>
-          {columnValues.map((v) => (
-            <option key={`x-${v}`} value={v}>
-              {v}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="space-x-2 w-max">
-        <span className="inline-block w-4">Y:</span>
-        <select
-          onChange={(e) => {
-            const c = new ChartOptions(ctrls);
-            c.columns.y = e.target.value;
-            setCtrls(c);
-          }}
-          value={ctrls.columns.y}
-          className="rounded-md px-2 py-[0.75px] hover:bg-eggshell-hover hover:text-white"
-        >
-          <option value="index">Index</option>
-          {columnValues.map((v) => (
-            <option key={`y-${v}`} value={v}>
-              {v}
-            </option>
-          ))}
-        </select>
-      </div>
-    </div>
-  );
-
-  const drawLine = (
-    <div
-      id="control-drawLine"
-      className="border-[1px] border-egg-400 rounded p-2 w-full"
-    >
+function ChartControlDrawLine({ ctrls, setCtrls }: ChartControlProps) {
+  return (
+    <ChartControlItem>
       <div className="space-x-2 w-max flex items-center">
-        <span>
+        <ChartControlTitle label="Draw Lines">
           <fa6.FaPenClip />
-        </span>
-        <span className="font-bold truncate">Draw Lines:</span>
+        </ChartControlTitle>
         <button
           onClick={(_) => {
             const c = new ChartOptions(ctrls);
@@ -344,7 +376,18 @@ export function ChartControls({
           true
         </button>
       </div>
-    </div>
+    </ChartControlItem>
+  );
+}
+
+export function ChartControls(props: ChartControlProps) {
+  const body = (
+    <>
+      {<ChartControlColumns {...props} />}
+      {<ChartControlWhen {...props} />}
+      {<ChartControlScale {...props} />}
+      {<ChartControlDrawLine {...props} />}
+    </>
   );
 
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -370,13 +413,11 @@ export function ChartControls({
           className={[
             "space-y-1 flex flex-col bg-egg-300 p-1 rounded-md",
             "transition-all",
-            open ? "opacity-1" : "opacity-0",
-            open ? "visible" : "invisible",
+            props.open ? "opacity-1" : "opacity-0",
+            props.open ? "visible" : "invisible",
           ].join(" ")}
         >
-          {scales}
-          {columns}
-          {drawLine}
+          {body}
         </div>
       }
       <button
@@ -390,7 +431,7 @@ export function ChartControls({
           "disable:invisible",
           "hover:bg-egg-400",
         ].join(" ")}
-        disabled={open}
+        disabled={props.open}
         ref={refs.setReference}
         {...getReferenceProps()}
       >
@@ -416,9 +457,7 @@ export function ChartControls({
             style={floatingStyles}
             {...getFloatingProps()}
           >
-            {scales}
-            {columns}
-            {drawLine}
+            {body}
           </div>
         </FloatingPortal>
       )}
