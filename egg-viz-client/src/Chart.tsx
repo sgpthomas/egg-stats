@@ -103,11 +103,13 @@ function DataPoint({
   point,
   fill = "currentColor",
   selected = false,
+  highlight = false,
   onHover = (_e, _b) => {},
 }: {
   point: Point;
   fill?: string;
   selected?: boolean;
+  highlight?: boolean;
   onHover?: (e: MouseEvent, active: boolean) => void;
 }) {
   let [smR, lgR] = [2.5, 4.0];
@@ -115,13 +117,19 @@ function DataPoint({
 
   if (isNaN(point.x) || isNaN(point.y)) return;
 
+  let opacity = "1";
+  if (highlight && !selected) {
+    opacity = "0.05";
+  }
+
   return (
     <circle
       cx={point.x}
       cy={point.y}
       r={selected ? rad * 2 : rad}
       fill={fill}
-      stroke="black"
+      stroke={!highlight || selected ? "black" : "none"}
+      opacity={opacity}
       onMouseOver={(e) => {
         setRad(lgR);
         onHover(e, true);
@@ -211,6 +219,26 @@ export function Chart({
     [dms.boundedHeight, ctrls.scaleType.y, ChartOptions.range(ctrls).y[1]],
   );
 
+  const highlight = (pt: Point): boolean => {
+    if (pt.id === undefined) return true;
+    if (selectedRules.get(pt.id) === null) return true;
+
+    return selectedRules.get(pt.id) == pt.rule;
+  };
+
+  const highlightLine = useMemo(
+    () =>
+      d3
+        .line<Point>()
+        .x((pt) => xScale(pt.x))
+        .y((pt) => yScale(pt.y))
+        .defined(
+          (pt) =>
+            !(isNaN(xScale(pt.x)) || isNaN(yScale(pt.y))) && highlight(pt),
+        ),
+    [xScale, yScale, selectedRules],
+  );
+
   const line = useMemo(
     () =>
       d3
@@ -256,12 +284,24 @@ export function Chart({
             .map(([id, child], idx) => (
               <g key={idx}>
                 {ctrls.drawLine ? (
-                  <path
-                    fill="none"
-                    stroke={colors[id]}
-                    strokeWidth={2.0}
-                    d={line(child) ?? undefined}
-                  />
+                  <>
+                    <path
+                      fill="none"
+                      stroke={colors[id]}
+                      strokeWidth={selectedRules.get(id) !== null ? 1.0 : 2.0}
+                      d={line(child) ?? undefined}
+                    />
+                    <path
+                      fill="none"
+                      stroke={colors[id]}
+                      strokeWidth={5.0}
+                      d={
+                        selectedRules.get(id) !== null
+                          ? (highlightLine(child) ?? undefined)
+                          : undefined
+                      }
+                    />
+                  </>
                 ) : null}
 
                 {child.map((pt, ptidx) => (
@@ -269,7 +309,8 @@ export function Chart({
                     key={`${idx}-${ptidx}`}
                     fill={colors[id]}
                     point={{ x: xScale(pt.x), y: yScale(pt.y) }}
-                    selected={selectedRules.get(id) == pt.rule}
+                    selected={selectedRules.get(id) === pt.rule}
+                    highlight={selectedRules.get(id) !== null}
                     onHover={(e, h) => {
                       if (!h) {
                         tooltip.set(undefined);
@@ -315,12 +356,14 @@ function points(
   const xSel = sel(xCol);
   const ySel = sel(yCol);
 
-  return PivotTable.map(table, (row) => row)
-    .filter((row) => row["when"] === when)
-    .map((row, idx) => ({
-      x: xSel(row, idx),
-      y: ySel(row, idx),
-      rule: row["rule"],
-      id: table.file_id,
-    }));
+  return (
+    PivotTable.map(table, (row) => row)
+      // .filter((row) => row["when"] === when)
+      .map((row, idx) => ({
+        x: xSel(row, idx),
+        y: ySel(row, idx),
+        rule: row["rule"],
+        id: table.file_id,
+      }))
+  );
 }

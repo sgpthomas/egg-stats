@@ -85,7 +85,7 @@ function FileItemLoaded({
                       selRule === rule && "bg-eggshell-400",
                     ].join(" ")}
                     key={idx}
-                    onMouseDown={(_) => {
+                    onMouseDown={(e) => {
                       if (selRule === rule) {
                         setSelRul(null);
                         onRule(null);
@@ -93,6 +93,7 @@ function FileItemLoaded({
                         setSelRul(rule);
                         onRule(rule);
                       }
+                      e.stopPropagation();
                     }}
                   >
                     {rule}
