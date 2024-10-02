@@ -25,8 +25,12 @@ import { UseQueryResult } from "@tanstack/react-query";
 export interface Point<T = number> {
   x: T;
   y: T;
-  rule?: string;
-  id?: number;
+}
+
+interface DataPoint {
+  pt: Point<number>;
+  rule: string;
+  id: number;
 }
 
 function scaleBound(input: number): number {
@@ -164,13 +168,13 @@ export function Chart({
 
   const [ref, dms] = useChartDimensions(chartSettings);
 
-  const lines: UseQueryResult<[number, Point[]]>[] = useTables({
+  const lines: UseQueryResult<[number, DataPoint[]]>[] = useTables({
     select: useCallback(
       (table: PivotTable) => [
         table.file_id,
-        points(table, ctrls.columns.x, ctrls.columns.y, ctrls.when),
+        points(table, ctrls.columns.x, ctrls.columns.y),
       ],
-      [ctrls.columns.x, ctrls.columns.y, ctrls.when],
+      [ctrls.columns.x, ctrls.columns.y],
     ),
   });
 
@@ -178,15 +182,10 @@ export function Chart({
     select: useCallback(
       (table: PivotTable) => {
         if (!selected.has(table.file_id)) return [1, 1];
-        const line = points(
-          table,
-          ctrls.columns.x,
-          ctrls.columns.y,
-          ctrls.when,
-        );
-        return [d3.max(line, (pt) => pt.x), d3.max(line, (pt) => pt.y)];
+        const line = points(table, ctrls.columns.x, ctrls.columns.y);
+        return [d3.max(line, (d) => d.pt.x), d3.max(line, (d) => d.pt.y)];
       },
-      [ctrls.columns.x, ctrls.columns.y, ctrls.when, selected],
+      [ctrls.columns.x, ctrls.columns.y, selected],
     ),
     combine: (queries) => {
       const maxes = queries.filter((q) => !!q.data).map((q) => q.data);
@@ -219,7 +218,7 @@ export function Chart({
     [dms.boundedHeight, ctrls.scaleType.y, ChartOptions.range(ctrls).y[1]],
   );
 
-  const highlight = (pt: Point): boolean => {
+  const highlight = (pt: DataPoint): boolean => {
     if (pt.id === undefined) return true;
     if (selectedRules.get(pt.id) === null) return true;
 
@@ -229,12 +228,12 @@ export function Chart({
   const highlightLine = useMemo(
     () =>
       d3
-        .line<Point>()
-        .x((pt) => xScale(pt.x))
-        .y((pt) => yScale(pt.y))
+        .line<DataPoint>()
+        .x((d) => xScale(d.pt.x))
+        .y((d) => yScale(d.pt.y))
         .defined(
-          (pt) =>
-            !(isNaN(xScale(pt.x)) || isNaN(yScale(pt.y))) && highlight(pt),
+          (d) =>
+            !(isNaN(xScale(d.pt.x)) || isNaN(yScale(d.pt.y))) && highlight(d),
         ),
     [xScale, yScale, selectedRules],
   );
@@ -242,10 +241,10 @@ export function Chart({
   const line = useMemo(
     () =>
       d3
-        .line<Point>()
-        .x((pt) => xScale(pt.x))
-        .y((pt) => yScale(pt.y))
-        .defined((pt) => !(isNaN(xScale(pt.x)) || isNaN(yScale(pt.y)))),
+        .line<DataPoint>()
+        .x((d) => xScale(d.pt.x))
+        .y((d) => yScale(d.pt.y))
+        .defined((d) => !(isNaN(xScale(d.pt.x)) || isNaN(yScale(d.pt.y)))),
     [xScale, yScale],
   );
 
@@ -304,12 +303,12 @@ export function Chart({
                   </>
                 ) : null}
 
-                {child.map((pt, ptidx) => (
+                {child.map((d, ptidx) => (
                   <DataPoint
                     key={`${idx}-${ptidx}`}
                     fill={colors[id]}
-                    point={{ x: xScale(pt.x), y: yScale(pt.y) }}
-                    selected={selectedRules.get(id) === pt.rule}
+                    point={{ x: xScale(d.pt.x), y: yScale(d.pt.y) }}
+                    selected={selectedRules.get(id) === d.rule}
                     highlight={selectedRules.get(id) !== null}
                     onHover={(e, h) => {
                       if (!h) {
@@ -324,9 +323,9 @@ export function Chart({
                         },
                         content: (
                           <div className="flex flex-col">
-                            {pt.rule && <span>rule: {pt.rule}</span>}
+                            {d.rule && <span>rule: {d.rule}</span>}
                             <span>
-                              x: {pt.x.toFixed(2)} y: {pt.y.toFixed(2)}
+                              x: {d.pt.x.toFixed(2)} y: {d.pt.y.toFixed(2)}
                             </span>
                           </div>
                         ),
@@ -346,8 +345,7 @@ function points(
   table?: PivotTable,
   xCol: string = "index",
   yCol: string = "cost",
-  when: string = "before_rewrite",
-): Point[] {
+): DataPoint[] {
   if (!table) return [];
 
   const sel = (col: string) => (row: any, idx: number) =>
@@ -356,14 +354,12 @@ function points(
   const xSel = sel(xCol);
   const ySel = sel(yCol);
 
-  return (
-    PivotTable.map(table, (row) => row)
-      // .filter((row) => row["when"] === when)
-      .map((row, idx) => ({
-        x: xSel(row, idx),
-        y: ySel(row, idx),
-        rule: row["rule"],
-        id: table.file_id,
-      }))
-  );
+  return PivotTable.map(table, (row) => row).map((row, idx) => ({
+    pt: {
+      x: xSel(row, idx),
+      y: ySel(row, idx),
+    },
+    rule: row["rule"],
+    id: table.file_id,
+  }));
 }

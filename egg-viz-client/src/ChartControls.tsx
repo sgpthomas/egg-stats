@@ -114,7 +114,6 @@ function RangeSelect({
 
 export class ChartOptions {
   scaleType: Point<"linear" | "log">;
-  when: "before_rewrite" | "after_rewrite";
   nTicks: Point<number>;
   drawLine: boolean;
   columns: Point<string>;
@@ -124,7 +123,6 @@ export class ChartOptions {
 
   constructor(other?: ChartOptions) {
     this.scaleType = other?.scaleType ?? { x: "linear", y: "linear" };
-    this.when = other?.when ?? "before_rewrite";
     this.nTicks = other?.nTicks ?? { x: 100, y: 100 };
     this.drawLine = other?.drawLine ?? true;
     this.columns = other?.columns ?? { x: "index", y: "cost" };
@@ -247,28 +245,6 @@ function ChartControlColumns({ ctrls, setCtrls }: ChartControlProps) {
   );
 }
 
-function ChartControlWhen({ ctrls, setCtrls }: ChartControlProps) {
-  return (
-    <ChartControlItem>
-      <ChartControlTitle label="When">
-        <fa6.FaRegClock />
-      </ChartControlTitle>
-      <div className="w-max">
-        <ButtonGroup<"before_rewrite" | "after_rewrite">
-          options={["before_rewrite", "after_rewrite"]}
-          labels={["Before", "After"]}
-          value={ctrls.when}
-          onChange={(v) => {
-            ctrls.when = v;
-            setCtrls(new ChartOptions(ctrls));
-          }}
-        />
-        <span className="ml-2">rewriting</span>
-      </div>
-    </ChartControlItem>
-  );
-}
-
 function ChartControlScale({ ctrls, setCtrls }: ChartControlProps) {
   return (
     <ChartControlItem>
@@ -384,7 +360,6 @@ export function ChartControls(props: ChartControlProps) {
   const body = (
     <>
       {<ChartControlColumns {...props} />}
-      {<ChartControlWhen {...props} />}
       {<ChartControlScale {...props} />}
       {<ChartControlDrawLine {...props} />}
     </>
