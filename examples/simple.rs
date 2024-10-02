@@ -60,7 +60,7 @@ fn simplify_with(
                 .with_recorder(recorders::Timestamp::new(Instant::now()))
                 .with_recorder(recorders::NumberENodes)
                 .with_recorder(recorders::NumberEClasses)
-                .with_recorder(recorders::BestProgram::new(AstSize, root)),
+                .with_recorder(recorders::BestProgram::new_with(|| AstSize, root)),
         )
         .with_egraph(egraph)
         .run(&make_rules());
