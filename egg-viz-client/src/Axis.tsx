@@ -24,7 +24,6 @@ export function XAxis({
 
   const midPoint = useMemo(() => {
     const range = scale.range();
-    console.log(range);
     if (range[0] === undefined || range[1] === undefined) return 0;
     return Math.abs(range[0] + range[1]) / 2;
   }, [scale.range().join("-")]);
@@ -87,7 +86,6 @@ export function YAxis({
 
   const midPoint = useMemo(() => {
     const range = scale.range();
-    console.log(range);
     if (range[0] === undefined || range[1] === undefined) return 0;
     return Math.abs(range[0] + range[1]) / 2;
   }, [scale.range().join("-")]);

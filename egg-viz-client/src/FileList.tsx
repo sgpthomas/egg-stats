@@ -1,7 +1,7 @@
 import * as d3 from "d3";
 import * as fa6 from "react-icons/fa6";
 import * as convert from "color-convert";
-import { PropsWithChildren, useMemo } from "react";
+import { PropsWithChildren, useEffect, useMemo, useRef } from "react";
 import usePersistState from "./usePersistState";
 import { PivotTable } from "./DataProcessing";
 import { useKnownFiles, useTables } from "./Fetch";
@@ -35,14 +35,9 @@ function FileItemLoaded({
   table: PivotTable;
   onRule: (rule: string | null) => void;
 }) {
-  const [selRule, setSelRul] = usePersistState<string | null>(
-    null,
-    `file-item-sel-rule-${table.file_id}`,
-  );
-
   // TODO move this into pivot table
-  const ruleList: Set<string> = useMemo(() => {
-    if (!table) return new Set();
+  const ruleList: string[] = useMemo(() => {
+    if (!table) return [];
     const uniqueRules: Set<string> = PivotTable.map(
       table,
       (row) => row.rule,
@@ -50,11 +45,44 @@ function FileItemLoaded({
       acc.add(el);
       return acc;
     }, new Set());
-    return uniqueRules;
+    return [...uniqueRules];
   }, [table]);
 
+  const [selRule, setSelRul] = usePersistState<number | null>(
+    null,
+    `file-item-sel-rule-${table.file_id}`,
+  );
+
+  const selRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (selRule === null || !(0 <= selRule && selRule < ruleList.length)) {
+      onRule(null);
+    } else {
+      onRule(ruleList[selRule] as string);
+    }
+  }, [selRule]);
+
   return (
-    <div className="mt-1 space-y-1">
+    <div
+      className="mt-1 space-y-1"
+      onKeyDown={(e) => {
+        if (!selRule) return;
+        if (e.key == "ArrowUp") {
+          setSelRul(Math.max(0, selRule - 1));
+        } else if (e.key == "ArrowDown") {
+          setSelRul(Math.min(ruleList.length - 1, selRule + 1));
+        } else {
+          return;
+        }
+        e.stopPropagation();
+        e.preventDefault();
+        selRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }}
+    >
       {table && (
         <>
           <div className="font-bold">Value names:</div>
@@ -71,7 +99,7 @@ function FileItemLoaded({
         </>
       )}
       <div className="font-bold">
-        {ruleList?.size} {ruleList?.size > 1 ? "rules" : "rule"} used:
+        {ruleList?.length} {ruleList?.length > 1 ? "rules" : "rule"} used:
       </div>
       <div className="border-2 border-egg-400 bg-egg-300 rounded-md shadow-inner">
         {ruleList && (
@@ -80,18 +108,19 @@ function FileItemLoaded({
               return (
                 <div key={idx}>
                   <button
+                    ref={selRule == idx ? selRef : undefined}
                     className={[
                       "w-full text-left pl-2",
-                      selRule === rule && "bg-eggshell-400",
+                      selRule === idx && "bg-eggshell-400",
                     ].join(" ")}
                     key={idx}
                     onMouseDown={(e) => {
-                      if (selRule === rule) {
+                      if (selRule === idx) {
                         setSelRul(null);
-                        onRule(null);
+                        // onRule(null);
                       } else {
-                        setSelRul(rule);
-                        onRule(rule);
+                        setSelRul(idx);
+                        // onRule(rule);
                       }
                       e.stopPropagation();
                     }}

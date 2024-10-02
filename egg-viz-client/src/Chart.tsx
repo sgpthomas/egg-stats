@@ -133,6 +133,7 @@ function DataPoint({
       r={selected ? rad * 2 : rad}
       fill={fill}
       stroke={!highlight || selected ? "black" : "none"}
+      strokeWidth={0.75}
       opacity={opacity}
       onMouseOver={(e) => {
         setRad(lgR);
