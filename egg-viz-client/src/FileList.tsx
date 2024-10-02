@@ -7,6 +7,7 @@ import { PivotTable } from "./DataProcessing";
 import { useKnownFiles, useTables } from "./Fetch";
 import { UseQueryResult } from "@tanstack/react-query";
 import { PiWaveSineBold } from "react-icons/pi";
+import { IoRemoveOutline } from "react-icons/io5";
 
 function CollapseDiv(props: PropsWithChildren<{ expanded: boolean }>) {
   return (
@@ -21,10 +22,10 @@ function CollapseDiv(props: PropsWithChildren<{ expanded: boolean }>) {
   );
 }
 
-function darkenColor(color?: string): string | undefined {
+function darkenColor(color?: string, amount = 1.3): string | undefined {
   if (!color) return;
   const [hue, sat, light] = convert.hex.hsl(color);
-  return `#${convert.hsl.hex([hue, sat, light / 1.3])}`;
+  return `#${convert.hsl.hex([hue, sat, light / amount])}`;
 }
 
 function FileItemLoaded({
@@ -137,7 +138,15 @@ function FileItem({
           "p-2",
           "rounded-md",
           "w-auto",
+          "cursor-pointer",
         ].join(" ")}
+        onMouseDown={(e) => {
+          if (open) {
+            setExp(!exp);
+          } else {
+            onSelect(id);
+          }
+        }}
       >
         <div className="flex relative">
           <input
@@ -149,9 +158,14 @@ function FileItem({
           <div
             style={{
               background: selected.has(id) ? colors[id] : "#fedbaa",
-              borderColor: darkenColor(colors[id]),
+              borderColor: selected.has(id)
+                ? darkenColor(colors[id])
+                : colors[id],
             }}
-            onMouseDown={(_) => onSelect(id)}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+              onSelect(id);
+            }}
             className={[
               "relative",
               "min-w-[26px]",
@@ -159,10 +173,9 @@ function FileItem({
               "rounded-full",
               "peer",
               "border-[5px]",
-              "shadow-inner-lg",
-              "transition-[background-color]",
+              "shadow-inner",
               "cursor-pointer",
-              "before:hover:border-[1px]",
+              "before:hover:border-[0.5px]",
               "before:absolute",
               "before:border-black",
               "before:w-[26px]",
@@ -170,13 +183,19 @@ function FileItem({
               "before:rounded-full",
               "before:bottom-[-5px]",
               "before:left-[-5px]",
+              "transition-all",
+              "before:transition-all",
             ].join(" ")}
           >
-            <PiWaveSineBold
-              className="absolute top-[1px] z-10"
-              size="15px"
-              color={darkenColor(colors[id])}
-            />
+            {selected.has(id) ? (
+              <PiWaveSineBold
+                className="absolute top-[1px] z-10"
+                size="15px"
+                color={darkenColor(colors[id], 2.0)}
+              />
+            ) : (
+              <IoRemoveOutline color={colors[id]} />
+            )}
           </div>
 
           {open ? (
@@ -186,21 +205,26 @@ function FileItem({
                   "ms-3",
                   "text-sm",
                   "font-medium",
-                  "text-gray-900",
+                  "text-black",
                   "truncate",
                   "grow",
                   "place-self-center",
+                  "select-none",
+                  "transition-opacity",
+                  !selected.has(id) && "opacity-50",
                 ].join(" ")}
               >
                 {path}
               </span>
-              <button onMouseDown={(_) => setExp(!exp)}>
-                <div
-                  className={["transition-all", exp && "rotate-90"].join(" ")}
-                >
-                  <fa6.FaCaretRight />
-                </div>
-              </button>
+              <div
+                className={[
+                  "transition-all",
+                  exp && "rotate-90",
+                  "place-self-center",
+                ].join(" ")}
+              >
+                <fa6.FaCaretRight />
+              </div>
             </>
           ) : undefined}
         </div>
