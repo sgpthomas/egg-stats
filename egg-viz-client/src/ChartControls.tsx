@@ -7,7 +7,7 @@ import {
   useFloating,
   useInteractions,
 } from "@floating-ui/react";
-import { PropsWithChildren, useCallback, useState } from "react";
+import { ChangeEvent, PropsWithChildren, useCallback, useState } from "react";
 import { useTables } from "./Fetch";
 import { PivotTable, setIntersect } from "./DataProcessing";
 import { UseQueryResult } from "@tanstack/react-query";
@@ -112,6 +112,48 @@ function RangeSelect({
   );
 }
 
+function CheckBox({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
+}) {
+  return (
+    <label className="flex items-center relative">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onChange}
+        className={[
+          "cursor-pointer",
+          "appearance-none",
+          "bg-white",
+          "checked:bg-eggshell-400",
+          "w-4",
+          "h-4",
+          "rounded-[5px]",
+          "border-[1px]",
+          "border-egg-500",
+          "hover:border-[1.5px]",
+          "hover:border-egg-600",
+          "hover:checked:bg-eggshell-500",
+          "transition-all",
+          "peer",
+        ].join(" ")}
+      />
+      <span
+        className={[
+          "absolute text-white opacity-0 peer-checked:opacity-100 pointer-events-none",
+          "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
+        ].join(" ")}
+      >
+        <fa6.FaCheck size="110%" />
+      </span>
+    </label>
+  );
+}
+
 export class ChartOptions {
   scaleType: Point<"linear" | "log">;
   nTicks: Point<number>;
@@ -212,7 +254,23 @@ function ChartControlColumns({ ctrls, setCtrls }: ChartControlProps) {
             setCtrls(c);
           }}
           value={ctrls.columns.x}
-          className="rounded-md px-2 py-[0.75px] hover:bg-eggshell-hover hover:text-white"
+          className={[
+            "rounded-md",
+            "px-2",
+            "py-[0.75px]",
+            "hover:bg-eggshell-hover",
+            "hover:text-white",
+            "appearance-none",
+            "py-0",
+            "my-[1px]",
+            "pr-5",
+          ].join(" ")}
+          style={{
+            backgroundImage: `url("data:image/svg+xml;utf8,<svg fill='black' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>")`,
+            backgroundRepeat: "no-repeat",
+            backgroundPositionX: "100%",
+            backgroundPositionY: "50%",
+          }}
         >
           <option value="index">Index</option>
           {columnValues.map((v) => (
@@ -231,7 +289,23 @@ function ChartControlColumns({ ctrls, setCtrls }: ChartControlProps) {
             setCtrls(c);
           }}
           value={ctrls.columns.y}
-          className="rounded-md px-2 py-[0.75px] hover:bg-eggshell-hover hover:text-white"
+          className={[
+            "rounded-md",
+            "px-2",
+            "py-[0.75px]",
+            "hover:bg-eggshell-hover",
+            "hover:text-white",
+            "appearance-none",
+            "py-0",
+            "my-[1px]",
+            "pr-5",
+          ].join(" ")}
+          style={{
+            backgroundImage: `url("data:image/svg+xml;utf8,<svg fill='black' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>")`,
+            backgroundRepeat: "no-repeat",
+            backgroundPositionX: "100%",
+            backgroundPositionY: "50%",
+          }}
         >
           <option value="index">Index</option>
           {columnValues.map((v) => (
@@ -251,10 +325,9 @@ function ChartControlScale({ ctrls, setCtrls }: ChartControlProps) {
       <ChartControlTitle label="Scales">
         <fa6.FaChartLine />
       </ChartControlTitle>
-      <div className="space-x-1 truncate overflow-hidden">
+      <div className="space-x-2 truncate overflow-hidden flex items-center">
         <span>Scale to fit:</span>
-        <input
-          type="checkbox"
+        <CheckBox
           checked={!ctrls.locked}
           onChange={(_) => {
             ChartOptions.lockRange(ctrls, !ctrls.locked);
@@ -331,26 +404,13 @@ function ChartControlDrawLine({ ctrls, setCtrls }: ChartControlProps) {
         <ChartControlTitle label="Draw Lines">
           <fa6.FaPenClip />
         </ChartControlTitle>
-        <button
-          onClick={(_) => {
-            const c = new ChartOptions(ctrls);
-            c.drawLine = !ctrls.drawLine;
-            setCtrls(c);
+        <CheckBox
+          checked={ctrls.drawLine}
+          onChange={(_) => {
+            ctrls.drawLine = !ctrls.drawLine;
+            setCtrls(new ChartOptions(ctrls));
           }}
-          className={[
-            "rounded-md",
-            "px-2",
-            "py-[0.75px]",
-            "hover:bg-eggshell-hover",
-            "hover:text-gray-100",
-            "hover:shadow-lg",
-            "hover:z-10",
-            ctrls.drawLine ? "bg-eggshell-active" : "bg-white",
-            "text-black",
-          ].join(" ")}
-        >
-          true
-        </button>
+        />
       </div>
     </ChartControlItem>
   );
@@ -397,7 +457,7 @@ export function ChartControls(props: ChartControlProps) {
       }
       <button
         className={[
-          "text-lg align-center p-2 bg-egg-300 fixed bottom-[14px] right-[14px] rounded-md",
+          "text-lg align-center p-2 bg-egg-300 absolute bottom-[14px] right-[14px] rounded-md",
           "transition-all",
           "disabled:pointer-events-none",
           "opacity-1",
