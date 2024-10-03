@@ -1,17 +1,12 @@
 import { Chart } from "./Chart";
 import { FileList } from "./FileList";
-import {
-  QueryClient,
-  QueryClientProvider,
-  UseQueryResult,
-} from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import usePersistState, { createIDBPersister } from "./usePersistState";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { Sidebar } from "./Sidebar";
-import { useCallback, useEffect, useMemo } from "react";
+import { MutableRefObject, useEffect, useMemo, useRef, useState } from "react";
 import { ChartControls, ChartOptions } from "./ChartControls";
 import * as d3 from "d3";
-import { AvailableResponse, DownloadResponse, useTables } from "./Fetch";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -22,6 +17,15 @@ const queryClient = new QueryClient({
 });
 
 const persister = createIDBPersister();
+
+function useAfter(callback: () => void, delay: number, deps: any[]) {
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      callback();
+    }, delay);
+    return () => window.clearTimeout(timeout);
+  }, deps);
+}
 
 function Home() {
   let [selected, setSelected] = usePersistState<Set<number>>(
@@ -48,6 +52,9 @@ function Home() {
   );
 
   const colors = useMemo(() => d3.schemeSet2, []);
+
+  const [ml, setMl] = useState(open ? 320 : 150);
+  useAfter(() => setMl(open ? 320 : 150), 175, [open]);
 
   return (
     <main>
@@ -77,14 +84,16 @@ function Home() {
           </div>
         </Sidebar>
         <div className="h-screen w-screen fixed">
-          <Chart
-            selected={selected}
-            marginLeft={open ? 320 : 150}
-            ctrls={ctrls}
-            setCtrls={setCtrls}
-            selectedRules={selectedRules}
-            colors={colors}
-          />
+          {
+            <Chart
+              selected={selected}
+              marginLeft={ml}
+              ctrls={ctrls}
+              setCtrls={setCtrls}
+              selectedRules={selectedRules}
+              colors={colors}
+            />
+          }
         </div>
       </div>
     </main>

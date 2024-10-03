@@ -219,12 +219,12 @@ export function Chart({
     [dms.boundedHeight, ctrls.scaleType.y, ChartOptions.range(ctrls).y[1]],
   );
 
-  const highlight = (pt: DataPoint): boolean => {
+  const highlight = useCallback((pt: DataPoint): boolean => {
     if (pt.id === undefined) return true;
     if (selectedRules.get(pt.id) === null) return true;
 
     return selectedRules.get(pt.id) == pt.rule;
-  };
+  }, []);
 
   const highlightLine = useMemo(
     () =>
