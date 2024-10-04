@@ -1,10 +1,12 @@
-import {
+import React, {
   ReactElement,
   useMemo,
   MouseEvent,
   useState,
   useEffect,
   useCallback,
+  useDeferredValue,
+  startTransition,
 } from "react";
 import { ChartSettings, useChartDimensions } from "./useChartDimensions";
 import * as d3 from "d3";
@@ -16,11 +18,12 @@ import {
   shift,
   useFloating,
 } from "@floating-ui/react";
-import { XAxis, YAxis } from "./Axis";
+import { d3Scale, XAxis, YAxis } from "./Axis";
 import { Grid } from "./Grid";
 import { ChartOptions } from "./ChartControls";
 import { useTables } from "./Fetch";
 import { UseQueryResult } from "@tanstack/react-query";
+import { timeFn, useDeferredRender } from "./hooks";
 
 export interface Point<T = number> {
   x: T;
@@ -147,6 +150,236 @@ function DataPoint({
   );
 }
 
+function Points({
+  columns,
+  scales,
+  colors,
+  selected,
+  setTooltip,
+  selectedRules,
+}: {
+  columns: Point<string>;
+  scales: Point<d3Scale>;
+  colors: readonly string[];
+  selected: Set<number>;
+  setTooltip: (tooltip?: Tooltip) => void;
+  selectedRules: Map<number, string | null>;
+}) {
+  const query: [number, DataPoint[]][] = useTables({
+    select: useCallback(
+      (table: PivotTable) => {
+        const data = points(table, columns.x, columns.y);
+        return [table.file_id, data] as [number, DataPoint[]];
+      },
+      [columns.x, columns.y, scales.x, scales.y],
+    ),
+    combine: (results) => results.filter((q) => !!q.data).map((q) => q.data),
+  });
+
+  const highlightedPoints: [number, DataPoint[]][] = useMemo(
+    () =>
+      query.map(([id, data]) => {
+        const selRule = selectedRules.get(id);
+        return [id, data.filter((dp) => dp.rule == selRule)] as [
+          number,
+          DataPoint[],
+        ];
+      }),
+    [query, selectedRules],
+  );
+
+  const onHover = useCallback(
+    (d: DataPoint) => (e: MouseEvent, h: boolean) => {
+      if (!h) {
+        setTooltip(undefined);
+        return;
+      }
+
+      setTooltip({
+        pos: {
+          x: e.clientX,
+          y: e.clientY,
+        },
+        content: (
+          <div className="flex flex-col">
+            {d.rule && <span>rule: {d.rule}</span>}
+            <span>
+              {columns.x}: {d.pt.x.toFixed(2)} {columns.y}: {d.pt.y.toFixed(2)}
+            </span>
+          </div>
+        ),
+      });
+    },
+    [],
+  );
+
+  const rendered = useDeferredRender<[number, ReactElement, ReactElement][]>(
+    () =>
+      query.map(([file_id, data]) => {
+        const el = (
+          <g key={`point-group-${file_id}`}>
+            {data.map((d, ptidx) => (
+              <DataPoint
+                key={`point-${file_id}-${ptidx}`}
+                fill={colors[file_id]}
+                point={{ x: scales.x(d.pt.x), y: scales.y(d.pt.y) }}
+                onHover={onHover(d)}
+              />
+            ))}
+          </g>
+        );
+        const dimEl = (
+          <g key={`dim-point-group-${file_id}`}>
+            {data.map((d, ptidx) => (
+              <DataPoint
+                key={`dim-${file_id}-${ptidx}`}
+                fill={colors[file_id]}
+                point={{ x: scales.x(d.pt.x), y: scales.y(d.pt.y) }}
+                onHover={onHover(d)}
+                highlight={true}
+              />
+            ))}
+          </g>
+        );
+        return [file_id, el, dimEl] as [number, ReactElement, ReactElement];
+      }),
+    [],
+    [scales.x, scales.y, columns.x, columns.y, colors, query],
+  );
+
+  const highlightedRender = useDeferredRender<[number, ReactElement][]>(
+    () =>
+      highlightedPoints.map(([file_id, data]) => {
+        const el = (
+          <g key={`point-group-${file_id}`}>
+            {data.map((d, ptidx) => (
+              <DataPoint
+                key={`point-${file_id}-${ptidx}`}
+                fill={colors[file_id]}
+                point={{ x: scales.x(d.pt.x), y: scales.y(d.pt.y) }}
+                onHover={onHover(d)}
+                selected={true}
+              />
+            ))}
+          </g>
+        );
+        return [file_id, el] as [number, ReactElement];
+      }),
+    [],
+    [highlightedPoints, scales.x, scales.y, columns.x, columns.y, colors],
+  );
+
+  return rendered
+    .map(([id, el, dimEl]) => [id, selectedRules.get(id) !== null ? dimEl : el])
+    .concat(highlightedRender)
+    .filter(([id, _]) => selected.has(id as number));
+}
+
+function Lines({
+  columns,
+  scales,
+  colors,
+  selected,
+  selectedRules,
+  drawLine,
+}: {
+  columns: Point<string>;
+  scales: Point<d3Scale>;
+  colors: readonly string[];
+  selected: Set<number>;
+  selectedRules: Map<number, string | null>;
+  drawLine: boolean;
+}) {
+  const highlight = useCallback(
+    (pt: DataPoint): boolean => {
+      if (pt.id === undefined) return true;
+      if (selectedRules.get(pt.id) === null) return true;
+
+      return selectedRules.get(pt.id) == pt.rule;
+    },
+    [selectedRules],
+  );
+
+  const highlightLine = useMemo(
+    () =>
+      d3
+        .line<DataPoint>()
+        .x((d) => scales.x(d.pt.x))
+        .y((d) => scales.y(d.pt.y))
+        .defined(
+          (d) =>
+            !(isNaN(scales.x(d.pt.x)) || isNaN(scales.y(d.pt.y))) &&
+            highlight(d),
+        ),
+    [scales.x, scales.y, selectedRules],
+  );
+
+  const line = useMemo(
+    () =>
+      d3
+        .line<DataPoint>()
+        .x((d) => scales.x(d.pt.x))
+        .y((d) => scales.y(d.pt.y))
+        .defined((d) => !(isNaN(scales.x(d.pt.x)) || isNaN(scales.y(d.pt.y)))),
+    [scales.x, scales.y],
+  );
+
+  const query: [number, DataPoint[]][] = useTables({
+    select: useCallback(
+      (table: PivotTable) => {
+        const data = points(table, columns.x, columns.y);
+        return [table.file_id, data] as [number, DataPoint[]];
+      },
+      [columns.x, columns.y, scales.x, scales.y],
+    ),
+    combine: (results) => results.filter((q) => !!q.data).map((q) => q.data),
+  });
+
+  const lines = useDeferredRender(
+    () =>
+      query.map(([id, data]) => {
+        return [
+          id,
+          <path
+            fill="none"
+            stroke={colors[id]}
+            strokeWidth={selectedRules.get(id) !== null ? 1.0 : 2.0}
+            d={line(data) ?? undefined}
+          />,
+          <path
+            fill="none"
+            stroke={colors[id]}
+            strokeWidth={5.0}
+            d={highlightLine(data) ?? undefined}
+          />,
+        ] as [number, ReactElement, ReactElement];
+      }),
+    [],
+    [
+      query,
+      selected,
+      selectedRules,
+      scales.x,
+      scales.y,
+      columns.x,
+      columns.y,
+      line,
+      highlightLine,
+    ],
+    "rendering lines",
+  );
+
+  if (!drawLine) return;
+  return lines
+    ?.filter(([id, _]) => selected.has(id))
+    .map(([id, line, hlLine]) => (
+      <g key={`line-${id}`}>
+        {line}
+        {selectedRules.get(id) !== null && hlLine}
+      </g>
+    ));
+}
+
 export function Chart({
   selected,
   ctrls,
@@ -168,16 +401,6 @@ export function Chart({
   };
 
   const [ref, dms] = useChartDimensions(chartSettings);
-
-  // const lines: UseQueryResult<[number, DataPoint[]]>[] = useTables({
-  //   select: useCallback(
-  //     (table: PivotTable) => [
-  //       table.file_id,
-  //       points(table, ctrls.columns.x, ctrls.columns.y),
-  //     ],
-  //     [ctrls.columns.x, ctrls.columns.y],
-  //   ),
-  // });
 
   const [maxX, maxY]: [number, number] = useTables({
     select: useCallback(
@@ -219,203 +442,7 @@ export function Chart({
     [dms.boundedHeight, ctrls.scaleType.y, ChartOptions.range(ctrls).y[1]],
   );
 
-  const highlight = useCallback((pt: DataPoint): boolean => {
-    if (pt.id === undefined) return true;
-    if (selectedRules.get(pt.id) === null) return true;
-
-    return selectedRules.get(pt.id) == pt.rule;
-  }, []);
-
-  const highlightLine = useMemo(
-    () =>
-      d3
-        .line<DataPoint>()
-        .x((d) => xScale(d.pt.x))
-        .y((d) => yScale(d.pt.y))
-        .defined(
-          (d) =>
-            !(isNaN(xScale(d.pt.x)) || isNaN(yScale(d.pt.y))) && highlight(d),
-        ),
-    [xScale, yScale, selectedRules],
-  );
-
-  const line = useMemo(
-    () =>
-      d3
-        .line<DataPoint>()
-        .x((d) => xScale(d.pt.x))
-        .y((d) => yScale(d.pt.y))
-        .defined((d) => !(isNaN(xScale(d.pt.x)) || isNaN(yScale(d.pt.y)))),
-    [xScale, yScale],
-  );
-
-  const renderedLines: UseQueryResult<[number, ReactElement]>[] = useTables({
-    select: useCallback(
-      (table: PivotTable) => {
-        const data = points(table, ctrls.columns.x, ctrls.columns.y).filter(
-          (d) => !(isNaN(d.pt.x) || isNaN(d.pt.y)),
-        );
-
-        const el = (
-          <g key={`${table.file_id}-lines`}>
-            <path
-              fill="none"
-              stroke={colors[table.file_id]}
-              strokeWidth={
-                selectedRules.get(table.file_id) !== null ? 1.0 : 2.0
-              }
-              d={line(data) ?? undefined}
-            />
-            <path
-              fill="none"
-              stroke={colors[table.file_id]}
-              strokeWidth={5.0}
-              d={
-                selectedRules.get(table.file_id) !== null
-                  ? (highlightLine(data) ?? undefined)
-                  : undefined
-              }
-            />
-          </g>
-        );
-
-        return [table.file_id, el];
-      },
-      [ctrls.columns.x, ctrls.columns.y, line, highlightLine, selectedRules],
-    ),
-  });
-
-  const renderedPoints: UseQueryResult<[number, ReactElement, ReactElement]>[] =
-    useTables({
-      select: useCallback(
-        (table: PivotTable) => {
-          const data = points(table, ctrls.columns.x, ctrls.columns.y);
-          const rawPts = (
-            <g key={`raw-datapoints-${table.file_id}`}>
-              {data.map((d, ptidx) => (
-                <DataPoint
-                  key={`raw-${table.file_id}-${ptidx}`}
-                  fill={colors[table.file_id]}
-                  point={{ x: xScale(d.pt.x), y: yScale(d.pt.y) }}
-                  onHover={(e, h) => {
-                    if (!h) {
-                      tooltip.set(undefined);
-                      return;
-                    }
-
-                    tooltip.set({
-                      pos: {
-                        x: e.clientX,
-                        y: e.clientY,
-                      },
-                      content: (
-                        <div className="flex flex-col">
-                          {d.rule && <span>rule: {d.rule}</span>}
-                          <span>
-                            {ctrls.columns.x}: {d.pt.x.toFixed(2)}{" "}
-                            {ctrls.columns.y}: {d.pt.y.toFixed(2)}
-                          </span>
-                        </div>
-                      ),
-                    });
-                  }}
-                />
-              ))}
-            </g>
-          );
-
-          const dimPts = (
-            <g key={`dim-datapoints-${table.file_id}`}>
-              {data.map((d, ptidx) => (
-                <DataPoint
-                  key={`dim-${table.file_id}-${ptidx}`}
-                  fill={colors[table.file_id]}
-                  point={{ x: xScale(d.pt.x), y: yScale(d.pt.y) }}
-                  highlight={true}
-                  onHover={(e, h) => {
-                    if (!h) {
-                      tooltip.set(undefined);
-                      return;
-                    }
-
-                    tooltip.set({
-                      pos: {
-                        x: e.clientX,
-                        y: e.clientY,
-                      },
-                      content: (
-                        <div className="flex flex-col">
-                          {d.rule && <span>rule: {d.rule}</span>}
-                          <span>
-                            x: {d.pt.x.toFixed(2)} y: {d.pt.y.toFixed(2)}
-                          </span>
-                        </div>
-                      ),
-                    });
-                  }}
-                />
-              ))}
-            </g>
-          );
-
-          return [table.file_id, rawPts, dimPts];
-        },
-        [ctrls.columns.x, ctrls.columns.y, xScale, yScale],
-      ),
-    });
-
   const tooltip = useTooltip();
-
-  const selectedPoints: UseQueryResult<[number, ReactElement | undefined]>[] =
-    useTables({
-      select: useCallback(
-        (table: PivotTable) => {
-          const selRule = selectedRules.get(table.file_id);
-          if (selRule === null) return [table.file_id, undefined];
-
-          const data = points(table, ctrls.columns.x, ctrls.columns.y).filter(
-            (dp) => dp.rule === selRule,
-          );
-
-          const el = (
-            <g key={`selected-datapoints-${table.file_id}`}>
-              {data.map((d, ptidx) => (
-                <DataPoint
-                  key={`selected-${table.file_id}-${ptidx}`}
-                  fill={colors[table.file_id]}
-                  point={{ x: xScale(d.pt.x), y: yScale(d.pt.y) }}
-                  selected={true}
-                  onHover={(e, h) => {
-                    if (!h) {
-                      tooltip.set(undefined);
-                      return;
-                    }
-
-                    tooltip.set({
-                      pos: {
-                        x: e.clientX,
-                        y: e.clientY,
-                      },
-                      content: (
-                        <div className="flex flex-col">
-                          {d.rule && <span>rule: {d.rule}</span>}
-                          <span>
-                            x: {d.pt.x.toFixed(2)} y: {d.pt.y.toFixed(2)}
-                          </span>
-                        </div>
-                      ),
-                    });
-                  }}
-                />
-              ))}
-            </g>
-          );
-
-          return [table.file_id, el];
-        },
-        [ctrls.columns.x, ctrls.columns.y, selectedRules, xScale, yScale],
-      ),
-    });
 
   return (
     <div ref={ref} className="h-screen bg-egg">
@@ -443,24 +470,24 @@ export function Chart({
           <g transform={`translate(0, ${dms.boundedHeight})`}>
             <XAxis scale={xScale} label={ctrls.columns.x} />
           </g>
-          {ctrls.drawLine &&
-            renderedLines
-              .filter((q) => !!q.data)
-              .map((q) => q.data)
-              .filter(([id, _]) => selected.has(id))
-              .map(([_, lines]) => lines)}
-          {renderedPoints
-            .filter((q) => !!q.data)
-            .map((q) => q.data)
-            .filter(([id, _]) => selected.has(id))
-            .map(([id, rawPts, dimPts]) =>
-              selectedRules.get(id) === null ? rawPts : dimPts,
-            )}
-          {selectedPoints
-            .filter((q) => !!q.data)
-            .map((q) => q.data)
-            .filter(([id, el]) => selected.has(id) && el)
-            .map(([_, el]) => el)}
+          {
+            <Lines
+              columns={ctrls.columns}
+              scales={{ x: xScale, y: yScale }}
+              colors={colors}
+              selected={selected}
+              selectedRules={selectedRules}
+              drawLine={ctrls.drawLine}
+            />
+          }
+          <Points
+            columns={ctrls.columns}
+            scales={{ x: xScale, y: yScale }}
+            colors={colors}
+            selected={selected}
+            setTooltip={tooltip.set}
+            selectedRules={selectedRules}
+          />
         </g>
       </svg>
     </div>

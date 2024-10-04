@@ -111,7 +111,8 @@ function FileItemLoaded({
                     ref={selRule == idx ? selRef : undefined}
                     className={[
                       "w-full text-left pl-2",
-                      selRule === idx && "bg-eggshell-400",
+                      selRule === idx && "bg-egg-500",
+                      selRule === idx && "text-white",
                     ].join(" ")}
                     key={idx}
                     onMouseDown={(e) => {

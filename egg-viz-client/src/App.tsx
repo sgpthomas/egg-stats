@@ -4,9 +4,19 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import usePersistState, { createIDBPersister } from "./usePersistState";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { Sidebar } from "./Sidebar";
-import { MutableRefObject, useEffect, useMemo, useRef, useState } from "react";
+import {
+  MutableRefObject,
+  ReactElement,
+  startTransition,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { ChartControls, ChartOptions } from "./ChartControls";
 import * as d3 from "d3";
+import { useDeferredRender } from "./hooks";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -53,8 +63,42 @@ function Home() {
 
   const colors = useMemo(() => d3.schemeSet2, []);
 
-  const [ml, setMl] = useState(open ? 320 : 150);
-  useAfter(() => setMl(open ? 320 : 150), 175, [open]);
+  const renderedChart = (
+    <Chart
+      selected={selected}
+      // marginLeft={open ? 320 : 150}
+      marginLeft={open ? 320 : 150}
+      ctrls={ctrls}
+      setCtrls={setCtrls}
+      selectedRules={selectedRules}
+      colors={colors}
+    />
+  );
+  // <span>loading</span>,
+  // [open, selected, ctrls, selectedRules, colors],
+  // const [renderedChart, setChart] = useState<ReactElement>(
+  //   <span>"loading"</span>,
+  // );
+  // useEffect(() => {
+  //   console.log("starting render");
+  //   startTransition(() =>
+  //     setChart(
+  //       <Chart
+  //         selected={selected}
+  //         marginLeft={open ? 320 : 100}
+  //         ctrls={ctrls}
+  //         setCtrls={setCtrls}
+  //         selectedRules={selectedRules}
+  //         colors={colors}
+  //       />,
+  //     ),
+  //   );
+  //   // const timeout = window.setTimeout(() => {
+  //   //   console.log("finish render");
+  //   //   setChart(newChart);
+  //   // }, 2000);
+  //   // return () => window.clearTimeout(timeout);
+  // }, [open, selected, ctrls, selectedRules, colors]);
 
   return (
     <main>
@@ -83,18 +127,7 @@ function Home() {
             <ChartControls ctrls={ctrls} setCtrls={setCtrls} open={open} />
           </div>
         </Sidebar>
-        <div className="h-screen w-screen fixed">
-          {
-            <Chart
-              selected={selected}
-              marginLeft={ml}
-              ctrls={ctrls}
-              setCtrls={setCtrls}
-              selectedRules={selectedRules}
-              colors={colors}
-            />
-          }
-        </div>
+        <div className="h-screen w-screen fixed">{renderedChart}</div>
       </div>
     </main>
   );

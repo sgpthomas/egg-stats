@@ -4,6 +4,9 @@ module.exports = {
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
+      borderRadius: {
+        md: "0.3rem",
+      },
       animation: {
         "spin-slow": "spin 2s linear infinite",
         "subtle-pulse":

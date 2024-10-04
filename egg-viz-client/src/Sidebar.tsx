@@ -1,5 +1,6 @@
 import { PropsWithChildren } from "react";
 import usePersistState from "./usePersistState";
+import { motion } from "framer-motion";
 
 type Props = {
   onChange?: (open: boolean) => void;
@@ -10,13 +11,11 @@ export function Sidebar(props: PropsWithChildren<Props>) {
   const width = open ? "16rem" : "68px";
 
   return (
-    <div
+    <motion.div
       style={{ width: width }}
-      className={["z-30", "transition-[width]", "will-change", "fixed"].join(
-        " ",
-      )}
+      className={["z-30", "fixed", "transition-[width]"].join(" ")}
     >
-      <div
+      <motion.div
         className={[
           "h-screen",
           "max-h-screen",
@@ -31,7 +30,7 @@ export function Sidebar(props: PropsWithChildren<Props>) {
           "space-y-2",
         ].join(" ")}
       >
-        <div className="flex flex-row mb-2 justify-center">
+        <motion.div className="flex flex-row mb-2 justify-center">
           {open && (
             <span className="text-xl font-bold grow content-center truncate ml-2">
               Egg Visualizer
@@ -53,9 +52,9 @@ export function Sidebar(props: PropsWithChildren<Props>) {
           >
             <img src="egg.svg" className="w-6 h-6" />
           </button>
-        </div>
+        </motion.div>
         {props.children}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

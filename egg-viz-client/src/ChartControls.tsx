@@ -34,7 +34,7 @@ function ButtonGroup<T>({
   };
 
   return (
-    <span className="inline-flex rounded-md shadow-sm">
+    <span className="inline-flex shadow-sm">
       {options.map((opt, idx) => (
         <button
           key={idx}
@@ -44,15 +44,15 @@ function ButtonGroup<T>({
             "py-[0.75px]",
             "text-sm",
             "font-medium",
-            opt == value ? "text-gray-700" : "text-gray-900",
+            opt == value ? "text-white" : "text-gray-900",
             rounded(idx),
-            "hover:bg-eggshell-hover",
+            "hover:bg-egg-600",
             "hover:text-white",
             "hover:shadow-lg",
             "hover:ring-1",
-            "hover:ring-eggshell-700",
+            "hover:ring-egg-600",
             "hover:z-10",
-            opt === value ? "bg-eggshell-active" : "bg-white",
+            opt === value ? "bg-egg-500" : "bg-white",
           ].join(" ")}
           onClick={(_) => onChange(opt)}
         >
@@ -129,15 +129,15 @@ function CheckBox({
           "cursor-pointer",
           "appearance-none",
           "bg-white",
-          "checked:bg-eggshell-400",
+          "checked:bg-egg-500",
           "w-4",
           "h-4",
-          "rounded-[5px]",
+          "rounded-md",
           "border-[1px]",
-          "border-egg-500",
+          "border-egg-600",
           "hover:border-[1.5px]",
-          "hover:border-egg-600",
-          "hover:checked:bg-eggshell-500",
+          "hover:border-egg-700",
+          "hover:checked:bg-egg-600",
           "transition-all",
           "peer",
         ].join(" ")}
@@ -258,7 +258,7 @@ function ChartControlColumns({ ctrls, setCtrls }: ChartControlProps) {
             "rounded-md",
             "px-2",
             "py-[0.75px]",
-            "hover:bg-eggshell-hover",
+            "hover:bg-egg-600",
             "hover:text-white",
             "appearance-none",
             "py-0",
@@ -293,7 +293,7 @@ function ChartControlColumns({ ctrls, setCtrls }: ChartControlProps) {
             "rounded-md",
             "px-2",
             "py-[0.75px]",
-            "hover:bg-eggshell-hover",
+            "hover:bg-egg-600",
             "hover:text-white",
             "appearance-none",
             "py-0",
@@ -301,7 +301,7 @@ function ChartControlColumns({ ctrls, setCtrls }: ChartControlProps) {
             "pr-5",
           ].join(" ")}
           style={{
-            backgroundImage: `url("data:image/svg+xml;utf8,<svg fill='black' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>")`,
+            backgroundImage: `url("data:image/svg+xml;utf8,<svg height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>")`,
             backgroundRepeat: "no-repeat",
             backgroundPositionX: "100%",
             backgroundPositionY: "50%",
