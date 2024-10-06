@@ -478,7 +478,7 @@ export function ChartControls(props: ChartControlProps) {
         <FloatingPortal>
           <div
             className={[
-              "w-max",
+              // "w-max",
               "z-40",
               "space-y-1",
               "bg-egg-300",

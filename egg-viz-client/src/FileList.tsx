@@ -168,7 +168,7 @@ function FileItem({
           "hover:bg-egg-400",
           "p-2",
           "rounded-md",
-          "w-auto",
+          "w-64",
           "cursor-pointer",
         ].join(" ")}
         onMouseDown={(_) => {
@@ -179,7 +179,10 @@ function FileItem({
           }
         }}
       >
-        <div className="flex relative">
+        <div
+          className="flex relative transition-transform"
+          style={{ transform: `translate(${open ? 0 : "13.3rem"}, 0)` }}
+        >
           <input
             type="checkbox"
             checked={selected.has(id)}
