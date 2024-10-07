@@ -37,7 +37,7 @@ export function useDeferredRender<T, U = T>(
       setState(timeFn(drawFn, label));
       return;
     });
-  }, [...deps, drawFn, label]);
+  }, deps);
   const deferred = useDeferredValue(state);
   return deferred;
 }

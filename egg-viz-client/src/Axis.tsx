@@ -43,7 +43,6 @@ export function XAxis({
   label?: string;
   kind: "linear" | "log";
 }) {
-  console.log(kind);
   const ticks = useMemo(() => {
     return computeTicks(scale, 200, (tick) =>
       kind === "log" ? Math.log10(tick) % 1 === 0 : true,

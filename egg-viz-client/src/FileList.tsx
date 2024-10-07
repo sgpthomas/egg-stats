@@ -62,7 +62,7 @@ function FileItemLoaded({
     } else {
       onRule(ruleList[selRule] as string);
     }
-  }, [selRule, onRule, ruleList]);
+  }, [selRule]);
 
   return (
     <div
@@ -104,7 +104,7 @@ function FileItemLoaded({
       </div>
       <div className="border-2 border-egg-400 bg-egg-300 rounded-md shadow-inner">
         {ruleList && (
-          <div className="h-28 overflow-scroll">
+          <div className="h-28 overflow-auto">
             {[...ruleList.values()].map((rule, idx) => {
               return (
                 <div key={idx}>

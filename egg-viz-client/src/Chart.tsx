@@ -207,7 +207,7 @@ function Points({
         ),
       });
     },
-    [columns.x, columns.y, setTooltip],
+    [],
   );
 
   const rendered = useDeferredRender<[number, ReactElement, ReactElement][]>(
@@ -308,7 +308,7 @@ function Lines({
             !(isNaN(scales.x(d.pt.x)) || isNaN(scales.y(d.pt.y))) &&
             highlight(d),
         ),
-    [scales.x, scales.y, selectedRules, highlight],
+    [scales.x, scales.y, selectedRules],
   );
 
   const line = useMemo(
@@ -441,8 +441,6 @@ export function Chart({
   );
 
   const tooltip = usePointTooltip();
-
-  console.log("dms", dms);
 
   return (
     <div ref={ref} className="h-screen bg-egg">
