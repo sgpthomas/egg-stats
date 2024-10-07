@@ -8,7 +8,6 @@ type Props = {
 
 export function Sidebar(props: PropsWithChildren<Props>) {
   const [open, setOpen] = usePersistState<boolean>(true, "sidebar-open");
-  // const width = open ? "16rem" : "68px";
   const width = open ? "0rem" : "-76%";
 
   return (
@@ -23,22 +22,25 @@ export function Sidebar(props: PropsWithChildren<Props>) {
           "fixed",
           "top-3",
           "left-3",
-          "z-40",
+          "z-20",
           "ease-in-out",
           "transition-transform",
-          // !open && "drop-shadow-md",
+          "focus:outline-none",
+          "focus:ring-[2px]",
+          "ring-egg-700",
+          "drop-shadow-md",
         ].join(" ")}
-        onMouseDown={(_e) => {
+        onClick={(_e) => {
           if (props.onChange) props.onChange(!open);
           setOpen(!open);
         }}
       >
-        <img src="egg.svg" className="w-6 h-6" />
+        <img alt="egg logo" src="egg.svg" className="w-6 h-6" />
       </button>
       <motion.div
         style={{ translateX: width }}
         className={[
-          "z-30",
+          "z-10",
           "fixed",
           "ease-in-out",
           "transition-transform",

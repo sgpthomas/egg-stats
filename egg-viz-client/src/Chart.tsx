@@ -5,8 +5,6 @@ import React, {
   useState,
   useEffect,
   useCallback,
-  useDeferredValue,
-  startTransition,
 } from "react";
 import { ChartSettings, useChartDimensions } from "./useChartDimensions";
 import * as d3 from "d3";
@@ -22,8 +20,7 @@ import { d3Scale, XAxis, YAxis } from "./Axis";
 import { Grid } from "./Grid";
 import { ChartOptions } from "./ChartControls";
 import { useTables } from "./Fetch";
-import { UseQueryResult } from "@tanstack/react-query";
-import { timeFn, useDeferredRender } from "./hooks";
+import { useDeferredRender } from "./hooks";
 
 export interface Point<T = number> {
   x: T;
@@ -70,7 +67,7 @@ interface Tooltip {
   content: ReactElement;
 }
 
-function useTooltip() {
+function usePointTooltip() {
   const [tooltip, setTooltip] = useState<Tooltip | undefined>(undefined);
   const { refs, floatingStyles } = useFloating({
     placement: "top",
@@ -106,7 +103,7 @@ function useTooltip() {
   };
 }
 
-function DataPoint({
+function DataPointSvg({
   point,
   fill = "currentColor",
   selected = false,
@@ -180,7 +177,7 @@ function Points({
     () =>
       query.map(([id, data]) => {
         const selRule = selectedRules.get(id);
-        return [id, data.filter((dp) => dp.rule == selRule)] as [
+        return [id, data.filter((dp) => dp.rule === selRule)] as [
           number,
           DataPoint[],
         ];
@@ -210,7 +207,7 @@ function Points({
         ),
       });
     },
-    [],
+    [columns.x, columns.y, setTooltip],
   );
 
   const rendered = useDeferredRender<[number, ReactElement, ReactElement][]>(
@@ -219,7 +216,7 @@ function Points({
         const el = (
           <g key={`point-group-${file_id}`}>
             {data.map((d, ptidx) => (
-              <DataPoint
+              <DataPointSvg
                 key={`point-${file_id}-${ptidx}`}
                 fill={colors[file_id]}
                 point={{ x: scales.x(d.pt.x), y: scales.y(d.pt.y) }}
@@ -231,7 +228,7 @@ function Points({
         const dimEl = (
           <g key={`dim-point-group-${file_id}`}>
             {data.map((d, ptidx) => (
-              <DataPoint
+              <DataPointSvg
                 key={`dim-${file_id}-${ptidx}`}
                 fill={colors[file_id]}
                 point={{ x: scales.x(d.pt.x), y: scales.y(d.pt.y) }}
@@ -253,7 +250,7 @@ function Points({
         const el = (
           <g key={`point-group-${file_id}`}>
             {data.map((d, ptidx) => (
-              <DataPoint
+              <DataPointSvg
                 key={`point-${file_id}-${ptidx}`}
                 fill={colors[file_id]}
                 point={{ x: scales.x(d.pt.x), y: scales.y(d.pt.y) }}
@@ -295,7 +292,7 @@ function Lines({
       if (pt.id === undefined) return true;
       if (selectedRules.get(pt.id) === null) return true;
 
-      return selectedRules.get(pt.id) == pt.rule;
+      return selectedRules.get(pt.id) === pt.rule;
     },
     [selectedRules],
   );
@@ -311,7 +308,7 @@ function Lines({
             !(isNaN(scales.x(d.pt.x)) || isNaN(scales.y(d.pt.y))) &&
             highlight(d),
         ),
-    [scales.x, scales.y, selectedRules],
+    [scales.x, scales.y, selectedRules, highlight],
   );
 
   const line = useMemo(
@@ -397,7 +394,8 @@ export function Chart({
 }) {
   const chartSettings: ChartSettings = {
     marginLeft: marginLeft,
-    marginRight: 0,
+    marginRight: 20,
+    marginBottom: 50,
   };
 
   const [ref, dms] = useChartDimensions(chartSettings);
@@ -442,7 +440,9 @@ export function Chart({
     [dms.boundedHeight, ctrls.scaleType.y, ChartOptions.range(ctrls).y[1]],
   );
 
-  const tooltip = useTooltip();
+  const tooltip = usePointTooltip();
+
+  console.log("dms", dms);
 
   return (
     <div ref={ref} className="h-screen bg-egg">
@@ -462,13 +462,21 @@ export function Chart({
           width={dms.width}
           height={dms.height}
           xOffset={dms.marginLeft}
-          yOffset={dms.marginRight}
+          yOffset={dms.marginTop}
           stroke="hsl(37, 70%, 80%)"
         />
         <g transform={`translate(${dms.marginLeft}, ${dms.marginTop})`}>
-          <YAxis scale={yScale} label={ctrls.columns.y} />
+          <YAxis
+            scale={yScale}
+            label={ctrls.columns.y}
+            kind={ctrls.scaleType.y}
+          />
           <g transform={`translate(0, ${dms.boundedHeight})`}>
-            <XAxis scale={xScale} label={ctrls.columns.x} />
+            <XAxis
+              scale={xScale}
+              label={ctrls.columns.x}
+              kind={ctrls.scaleType.x}
+            />
           </g>
           {
             <Lines

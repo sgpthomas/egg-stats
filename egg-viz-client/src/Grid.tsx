@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { d3Scale } from "./Axis";
+import { computeTicks, d3Scale } from "./Axis";
 
 export function Grid({
   xScale,
@@ -23,21 +23,11 @@ export function Grid({
   stroke?: string;
 }) {
   const xTicks = useMemo(() => {
-    const width = Math.abs(
-      (xScale.domain()[0] ?? 100) - (xScale.domain()[1] ?? 0),
-    );
-    return xScale
-      .ticks(2 * Math.trunc(Math.log10(width)))
-      .map((value) => xScale(value));
+    return computeTicks(xScale, 100).map((value) => xScale(value));
   }, [xScale.domain().join("-"), xScale.range().join("-"), xNTicks]);
 
   const yTicks = useMemo(() => {
-    const width = Math.abs(
-      (yScale.domain()[0] ?? 100) - (yScale.domain()[1] ?? 0),
-    );
-    return yScale
-      .ticks(1.2 * Math.trunc(Math.log10(width)))
-      .map((value) => yScale(value));
+    return computeTicks(yScale, 100).map((value) => yScale(value));
   }, [yScale.domain().join("-"), yScale.range().join("-"), yNTicks]);
 
   return (

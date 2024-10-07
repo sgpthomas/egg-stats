@@ -1,26 +1,57 @@
 import { useMemo } from "react";
 
+function AxisTickLabel({ value }: { value: number }) {
+  if (value < 10) return <tspan>{value}</tspan>;
+
+  if (Math.log10(value) % 1 === 0) {
+    const exp = Math.log10(value);
+
+    return (
+      <>
+        <tspan>10</tspan>
+        <tspan baselineShift="super">{exp}</tspan>
+      </>
+    );
+  }
+
+  return <tspan>{value.toExponential()}</tspan>;
+}
+
 export type d3Scale =
   | d3.ScaleLinear<number, number>
   | d3.ScaleLogarithmic<number, number>;
 
+export function computeTicks(
+  scale: d3Scale,
+  density: number = 100,
+  filter: (tick: number) => boolean = (_) => true,
+): number[] {
+  const actualWidth = Math.abs(
+    (scale.range()[0] ?? 100) - (scale.range()[1] ?? 0),
+  );
+
+  const actualTicks = actualWidth / density;
+  return scale.ticks(Math.max(2, actualTicks)).filter(filter);
+}
+
 export function XAxis({
   scale,
   label = "test",
+  kind = "linear",
 }: {
   scale: d3Scale;
   label?: string;
+  kind: "linear" | "log";
 }) {
+  console.log(kind);
   const ticks = useMemo(() => {
-    const width = Math.abs(
-      (scale.domain()[0] ?? 100) - (scale.domain()[1] ?? 0),
-    );
-
-    return scale.ticks(Math.trunc(Math.log10(width))).map((value) => ({
+    return computeTicks(scale, 200, (tick) =>
+      kind === "log" ? Math.log10(tick) % 1 === 0 : true,
+    ).map((value) => ({
       value,
       offset: scale(value),
     }));
-  }, [scale.domain().join("-"), scale.range().join("-")]);
+  }, [scale.domain().join("-"), scale.range().join("-"), kind]);
 
   const midPoint = useMemo(() => {
     const range = scale.range();
@@ -51,16 +82,20 @@ export function XAxis({
           <text
             key={value}
             style={{
-              fontSize: "10px",
+              fontSize: "11px",
               textAnchor: "middle",
-              transform: "translateY(20px)",
+              transform: "translateY(22px)",
             }}
           >
-            {value}
+            <AxisTickLabel value={value} />
           </text>
         </g>
       ))}
-      <text textAnchor="middle" transform={`translate(${midPoint}, 30)`}>
+      <text
+        textAnchor="middle"
+        fontWeight="bold"
+        transform={`translate(${midPoint}, 40)`}
+      >
         {label}
       </text>
     </svg>
@@ -70,19 +105,20 @@ export function XAxis({
 export function YAxis({
   scale,
   label = "test",
+  kind = "linear",
 }: {
   scale: d3Scale;
   label?: string;
+  kind: "linear" | "log";
 }) {
   const ticks = useMemo(() => {
-    const width = Math.abs(
-      (scale.domain()[0] ?? 100) - (scale.domain()[1] ?? 0),
-    );
-    return scale.ticks(Math.trunc(Math.log10(width))).map((value) => ({
+    return computeTicks(scale, 100, (tick) =>
+      kind === "log" ? Math.log10(tick) % 1 === 0 : true,
+    ).map((value) => ({
       value,
       offset: scale(value),
     }));
-  }, [scale.domain().join("-"), scale.range().join("-")]);
+  }, [scale.domain().join("-"), scale.range().join("-"), kind]);
 
   const midPoint = useMemo(() => {
     const range = scale.range();
@@ -113,18 +149,19 @@ export function YAxis({
           <text
             key={value}
             style={{
-              fontSize: "10px",
+              fontSize: "11px",
               textAnchor: "end",
               transform: "translate(-10px, 3px)",
             }}
           >
-            {value}
+            <AxisTickLabel value={value} />
           </text>
         </g>
       ))}
       <text
         textAnchor="middle"
-        transform={`translate(-10, ${midPoint}), rotate(-90)`}
+        fontWeight="bold"
+        transform={`translate(-40, ${midPoint}), rotate(-90)`}
       >
         {label}
       </text>

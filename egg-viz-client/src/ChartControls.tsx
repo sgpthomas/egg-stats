@@ -11,6 +11,7 @@ import { ChangeEvent, PropsWithChildren, useCallback, useState } from "react";
 import { useTables } from "./Fetch";
 import { PivotTable, setIntersect } from "./DataProcessing";
 import { UseQueryResult } from "@tanstack/react-query";
+import { HoverTooltip } from "./hooks";
 
 function ButtonGroup<T>({
   options,
@@ -44,15 +45,19 @@ function ButtonGroup<T>({
             "py-[0.75px]",
             "text-sm",
             "font-medium",
-            opt == value ? "text-white" : "text-gray-900",
+            opt === value ? "text-white" : "text-gray-900",
             rounded(idx),
+            "ring-[0.5px]",
+            "ring-egg-700",
             "hover:bg-egg-600",
             "hover:text-white",
             "hover:shadow-lg",
             "hover:ring-1",
-            "hover:ring-egg-600",
+            "hover:ring-egg-700",
             "hover:z-10",
             opt === value ? "bg-egg-500" : "bg-white",
+            "focus:outline-none",
+            "focus:ring-[2px]",
           ].join(" ")}
           onClick={(_) => onChange(opt)}
         >
@@ -140,6 +145,9 @@ function CheckBox({
           "hover:checked:bg-egg-600",
           "transition-all",
           "peer",
+          "focus:outline-none",
+          "focus:ring-[2px]",
+          "ring-egg-700",
         ].join(" ")}
       />
       <span
@@ -151,6 +159,47 @@ function CheckBox({
         <fa6.FaCheck size="110%" />
       </span>
     </label>
+  );
+}
+
+function ChartSelect({
+  children,
+  onChange,
+  value,
+}: PropsWithChildren<{
+  onChange: (e: ChangeEvent<HTMLSelectElement>) => void;
+  value: string;
+}>) {
+  return (
+    <select
+      onChange={onChange}
+      value={value}
+      className={[
+        "rounded-md",
+        "px-2",
+        "py-[0.75px]",
+        "hover:bg-egg-600",
+        "hover:text-white",
+        "appearance-none",
+        "py-0",
+        "my-[1px]",
+        "pr-5",
+        "ring-[0.5px]",
+        "hover:ring-[1px]",
+        "focus:outline-none",
+        "focus:ring-[2px]",
+        "ring-egg-700",
+        "transition-all",
+      ].join(" ")}
+      style={{
+        backgroundImage: `url("data:image/svg+xml;utf8,<svg fill='black' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>")`,
+        backgroundRepeat: "no-repeat",
+        backgroundPositionX: "100%",
+        backgroundPositionY: "50%",
+      }}
+    >
+      {children}
+    </select>
   );
 }
 
@@ -247,30 +296,13 @@ function ChartControlColumns({ ctrls, setCtrls }: ChartControlProps) {
       </ChartControlTitle>
       <div className="space-x-2 w-max">
         <span className="inline-block w-4">X:</span>
-        <select
+        <ChartSelect
           onChange={(e) => {
             const c = new ChartOptions(ctrls);
             c.columns.x = e.target.value;
             setCtrls(c);
           }}
           value={ctrls.columns.x}
-          className={[
-            "rounded-md",
-            "px-2",
-            "py-[0.75px]",
-            "hover:bg-egg-600",
-            "hover:text-white",
-            "appearance-none",
-            "py-0",
-            "my-[1px]",
-            "pr-5",
-          ].join(" ")}
-          style={{
-            backgroundImage: `url("data:image/svg+xml;utf8,<svg fill='black' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>")`,
-            backgroundRepeat: "no-repeat",
-            backgroundPositionX: "100%",
-            backgroundPositionY: "50%",
-          }}
         >
           <option value="index">Index</option>
           {columnValues.map((v) => (
@@ -278,34 +310,17 @@ function ChartControlColumns({ ctrls, setCtrls }: ChartControlProps) {
               {v}
             </option>
           ))}
-        </select>
+        </ChartSelect>
       </div>
       <div className="space-x-2 w-max">
         <span className="inline-block w-4">Y:</span>
-        <select
+        <ChartSelect
           onChange={(e) => {
             const c = new ChartOptions(ctrls);
             c.columns.y = e.target.value;
             setCtrls(c);
           }}
           value={ctrls.columns.y}
-          className={[
-            "rounded-md",
-            "px-2",
-            "py-[0.75px]",
-            "hover:bg-egg-600",
-            "hover:text-white",
-            "appearance-none",
-            "py-0",
-            "my-[1px]",
-            "pr-5",
-          ].join(" ")}
-          style={{
-            backgroundImage: `url("data:image/svg+xml;utf8,<svg height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>")`,
-            backgroundRepeat: "no-repeat",
-            backgroundPositionX: "100%",
-            backgroundPositionY: "50%",
-          }}
         >
           <option value="index">Index</option>
           {columnValues.map((v) => (
@@ -313,7 +328,7 @@ function ChartControlColumns({ ctrls, setCtrls }: ChartControlProps) {
               {v}
             </option>
           ))}
-        </select>
+        </ChartSelect>
       </div>
     </ChartControlItem>
   );
@@ -370,7 +385,7 @@ function ChartControlScale({ ctrls, setCtrls }: ChartControlProps) {
         />
       </div>
       <div className="space-x-2 w-max">
-        <span>X: </span>
+        <span className="inline-block w-4">X: </span>
         <ButtonGroup<"linear" | "log">
           options={["linear", "log"]}
           value={ctrls.scaleType.x}
@@ -382,7 +397,7 @@ function ChartControlScale({ ctrls, setCtrls }: ChartControlProps) {
         />
       </div>
       <div className="space-x-2 w-max">
-        <span>Y: </span>
+        <span className="inline-block w-4">Y: </span>
         <ButtonGroup<"linear" | "log">
           options={["linear", "log"]}
           value={ctrls.scaleType.y}
@@ -455,25 +470,30 @@ export function ChartControls(props: ChartControlProps) {
           {body}
         </div>
       }
-      <button
-        className={[
-          "text-lg align-center p-2 bg-egg-300 absolute bottom-[14px] right-[14px] rounded-md",
-          "transition-all",
-          "disabled:pointer-events-none",
-          "opacity-1",
-          "disabled:opacity-0",
-          "visible",
-          "disable:invisible",
-          "hover:bg-egg-400",
-        ].join(" ")}
-        disabled={props.open}
-        ref={refs.setReference}
-        {...getReferenceProps()}
-      >
-        <div className="hover:animate-spin-slow">
-          <fa6.FaGear size="1.5rem" />
-        </div>
-      </button>
+      <HoverTooltip content=<span>Chart Controls</span>>
+        <button
+          className={[
+            "text-lg align-center p-2 bg-egg-300 absolute bottom-[14px] right-[14px] rounded-md",
+            "transition-all",
+            "disabled:pointer-events-none",
+            "opacity-1",
+            "disabled:opacity-0",
+            "visible",
+            "disable:invisible",
+            "hover:bg-egg-400",
+            "focus:outline-none",
+            "focus:ring-[2px]",
+            "ring-egg-700",
+          ].join(" ")}
+          disabled={props.open}
+          ref={refs.setReference}
+          {...getReferenceProps()}
+        >
+          <div className="hover:animate-spin-slow">
+            <fa6.FaGear size="1.5rem" />
+          </div>
+        </button>
+      </HoverTooltip>
       {settingsOpen && (
         <FloatingPortal>
           <div

@@ -16,6 +16,13 @@ code {
     monospace;
 }
 
+/* Firefox */
+* {
+    /* scrollbar-width: thin; */
+    scrollbar-color: #7c3212bf #c24a0c1f;
+}
+
+
 @layer base {
     input[type='number']::-webkit-outer-spin-button,
     input[type='number']::-webkit-inner-spin-button,
@@ -24,6 +31,24 @@ code {
         margin: 0;
         -moz-appearance: textfield !important;
     }
+
+    /* Chrome, Edge, and Safari */
+    /* *::-webkit-scrollbar { */
+    /*     /\* width: 15px; *\/ */
+    /* } */
+
+    /* *::-webkit-scrollbar-track:vertical:hover { */
+    /*     background-color: #c24a0c1f; */
+    /*     /\* z-index: -1; *\/ */
+    /*     border-radius: 5px; */
+    /* } */
+
+    /* *::-webkit-scrollbar-thumb:vertical:hover { */
+    /*     background-color: #c24a0c1f; */
+    /*     /\* border-radius: 14px; *\/ */
+    /*     /\* border: 3px solid #c24a0c; *\/ */
+    /* } */
+
 }
 
 @layer utilities {
