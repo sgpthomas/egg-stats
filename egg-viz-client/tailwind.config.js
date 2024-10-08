@@ -23,6 +23,7 @@ module.exports = {
         current: "currentColor",
         egg: {
           DEFAULT: "#FFEFD5",
+          // hover:
           50: "#fff8ed",
           100: "#ffefd5",
           200: "#fedbaa",
@@ -34,6 +35,14 @@ module.exports = {
           800: "#9a3a12",
           900: "#7c3212",
           950: "#431707",
+        },
+        mixed: {
+          0: "#342821",
+          20: "#483c36",
+          40: "#4c4c4c",
+          60: "#636363",
+          80: "#7b7b7b",
+          100: "#9f9894",
         },
         eggshell: {
           DEFAULT: "#D5E5FF",

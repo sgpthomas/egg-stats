@@ -42,6 +42,22 @@ export function useDeferredRender<T, U = T>(
   return deferred;
 }
 
+export function useMediaQuery(query: string) {
+  const [matches, setMatches] = useState(false);
+  useEffect(() => {
+    const matchQueryList = window.matchMedia(query);
+    setMatches(matchQueryList.matches);
+    function handleChange(e: MediaQueryListEvent) {
+      setMatches(e.matches);
+    }
+    matchQueryList.addEventListener("change", handleChange);
+    return () => {
+      matchQueryList.removeEventListener("change", handleChange);
+    };
+  }, [query]);
+  return matches;
+}
+
 export function HoverTooltip({
   children,
   content,
@@ -76,7 +92,16 @@ export function HoverTooltip({
             ref={refs.setFloating}
             style={floatingStyles}
             {...getFloatingProps()}
-            className="z-40 bg-white drop-shadow-md rounded-md border-[1px] border-egg-900 px-1"
+            className={[
+              "z-40",
+              "bg-white dark:bg-mixed-40",
+              "text-black dark:text-white",
+              "drop-shadow-md",
+              "rounded-md",
+              "border-[1px]",
+              "border-egg-900 dark:border-mixed-60",
+              "px-1",
+            ].join(" ")}
           >
             {content}
           </div>

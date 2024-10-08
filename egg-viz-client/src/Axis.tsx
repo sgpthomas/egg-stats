@@ -38,10 +38,12 @@ export function XAxis({
   scale,
   label = "test",
   kind = "linear",
+  stroke = "black",
 }: {
   scale: d3Scale;
   label?: string;
   kind: "linear" | "log";
+  stroke: string;
 }) {
   const ticks = useMemo(() => {
     return computeTicks(scale, 200, (tick) =>
@@ -73,11 +75,11 @@ export function XAxis({
           6,
         ].join(" ")}
         fill="none"
-        stroke="currentColor"
+        stroke={stroke}
       />
       {ticks.map(({ value, offset }) => (
         <g key={value} transform={`translate(${offset}, 0)`}>
-          <line y2="6" stroke="currentColor" />
+          <line y2="6" stroke={stroke} />
           <text
             key={value}
             style={{
@@ -85,6 +87,7 @@ export function XAxis({
               textAnchor: "middle",
               transform: "translateY(22px)",
             }}
+            fill={stroke}
           >
             <AxisTickLabel value={value} />
           </text>
@@ -94,6 +97,7 @@ export function XAxis({
         textAnchor="middle"
         fontWeight="bold"
         transform={`translate(${midPoint}, 40)`}
+        fill={stroke}
       >
         {label}
       </text>
@@ -105,10 +109,12 @@ export function YAxis({
   scale,
   label = "test",
   kind = "linear",
+  stroke = "black",
 }: {
   scale: d3Scale;
   label?: string;
   kind: "linear" | "log";
+  stroke: string;
 }) {
   const ticks = useMemo(() => {
     return computeTicks(scale, 100, (tick) =>
@@ -140,11 +146,11 @@ export function YAxis({
           -6,
         ].join(" ")}
         fill="none"
-        stroke="currentColor"
+        stroke={stroke}
       />
       {ticks.map(({ value, offset }) => (
         <g key={value} transform={`translate(0, ${offset})`}>
-          <line x2="-6" stroke="currentColor" />
+          <line x2="-6" stroke={stroke} />
           <text
             key={value}
             style={{
@@ -152,6 +158,7 @@ export function YAxis({
               textAnchor: "end",
               transform: "translate(-10px, 3px)",
             }}
+            fill={stroke}
           >
             <AxisTickLabel value={value} />
           </text>
@@ -161,6 +168,7 @@ export function YAxis({
         textAnchor="middle"
         fontWeight="bold"
         transform={`translate(-40, ${midPoint}), rotate(-90)`}
+        fill={stroke}
       >
         {label}
       </text>

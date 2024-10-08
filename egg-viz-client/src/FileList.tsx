@@ -86,12 +86,22 @@ function FileItemLoaded({
     >
       {table && (
         <>
-          <div className="font-bold">Value names:</div>
+          <div className="font-bold dark:text-white">Value names:</div>
           <div className="flex flex-row gap-[2px] overflow-x-auto no-scrollbar">
             {table.value_names.map((value, idx) => (
               <div
                 key={idx}
-                className="border-2 rounded-full border-egg-500 bg-egg-400 px-1 drop-shadow-sm"
+                className={[
+                  "border-2",
+                  "rounded-full",
+                  "border-egg-500",
+                  "bg-egg-400",
+                  "dark:bg-mixed-60",
+                  "dark:border-mixed-80",
+                  "dark:text-white",
+                  "px-1",
+                  "drop-shadow-sm",
+                ].join(" ")}
               >
                 {value}
               </div>
@@ -99,10 +109,20 @@ function FileItemLoaded({
           </div>{" "}
         </>
       )}
-      <div className="font-bold">
+      <div className="font-bold dark:text-white">
         {ruleList?.length} {ruleList?.length > 1 ? "rules" : "rule"} used:
       </div>
-      <div className="border-2 border-egg-400 bg-egg-300 rounded-md shadow-inner">
+      <div
+        className={[
+          "border-2",
+          "border-egg-400",
+          "bg-egg-300",
+          "dark:bg-mixed-40",
+          "dark:border-mixed-60",
+          "rounded-md",
+          "shadow-inner",
+        ].join(" ")}
+      >
         {ruleList && (
           <div className="h-28 overflow-auto">
             {[...ruleList.values()].map((rule, idx) => {
@@ -113,15 +133,14 @@ function FileItemLoaded({
                     tabIndex={1}
                     className={[
                       "w-full text-left pl-2",
-                      selRule === idx && "bg-egg-500",
-                      selRule === idx && "text-white",
+                      selRule === idx && "bg-egg-500 dark:bg-mixed-80",
+                      selRule === idx && "text-white dark:text-black",
+                      "text-black dark:text-white",
                       "focus:outline-none",
                       "foucs:outline-1",
                       "focus:-outline-offset-2",
                       "focus:outline-egg-700",
                       "focus:rounded-md",
-                      // "focus:ring-[2px]",
-                      // "ring-egg-700",
                     ].join(" ")}
                     key={idx}
                     onClick={(e) => {
@@ -172,12 +191,12 @@ function FileItem({
         <HoverTooltip content=<span>{path}</span> enabled={!open}>
           <div
             tabIndex={1}
-            // ref={refs.setReference}
-            // {...getReferenceProps()}
             className={[
               "border-[1px]",
               "border-egg-400",
               "hover:bg-egg-400",
+              "dark:border-mixed-40",
+              "dark:hover:bg-mixed-60",
               "p-2",
               "rounded-md",
               "w-64",
@@ -256,6 +275,7 @@ function FileItem({
                       "text-sm",
                       "font-medium",
                       "text-black",
+                      "dark:text-white",
                       "truncate",
                       "grow",
                       "place-self-center",
@@ -271,6 +291,7 @@ function FileItem({
                       "transition-all",
                       exp && "rotate-90",
                       "place-self-center",
+                      "dark:text-white",
                     ].join(" ")}
                   >
                     <fa6.FaCaretRight />
@@ -283,7 +304,7 @@ function FileItem({
                 {table && table.data ? (
                   <FileItemLoaded table={table.data} onRule={onRule} />
                 ) : (
-                  <div className="p-1 mt-2 bg-egg-400 rounded-md flex space-x-1 items-center animate-subtle-pulse justify-center">
+                  <div className="p-1 mt-2 bg-egg-400 dark:bg-mixed-40 rounded-md flex space-x-1 items-center animate-subtle-pulse justify-center">
                     <span className="text-sm text-center font-bold truncate grow">
                       Downloading
                     </span>
@@ -353,7 +374,7 @@ export function FileList({
     );
 
   return (
-    <ul className="space-y-1 font-medium p-1 rounded-md bg-egg-300">
+    <ul className="space-y-1 font-medium p-1 rounded-md bg-egg-300 dark:bg-mixed-20">
       {knownFiles.data.paths.map(([id, path], idx) => (
         <FileItem
           key={idx}

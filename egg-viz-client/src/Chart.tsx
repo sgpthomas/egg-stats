@@ -20,7 +20,7 @@ import { d3Scale, XAxis, YAxis } from "./Axis";
 import { Grid } from "./Grid";
 import { ChartOptions } from "./ChartControls";
 import { useTables } from "./Fetch";
-import { useDeferredRender } from "./hooks";
+import { useDeferredRender, useMediaQuery } from "./hooks";
 
 export interface Point<T = number> {
   x: T;
@@ -132,7 +132,7 @@ function DataPointSvg({
       cy={point.y}
       r={selected ? rad * 2 : rad}
       fill={fill}
-      stroke={!highlight || selected ? "black" : "none"}
+      stroke={!highlight || selected ? "#5d524c" : "none"}
       strokeWidth={0.75}
       opacity={opacity}
       onMouseOver={(e) => {
@@ -442,12 +442,26 @@ export function Chart({
 
   const tooltip = usePointTooltip();
 
+  const dark = useMediaQuery("(prefers-color-scheme: dark)");
+
   return (
-    <div ref={ref} className="h-screen bg-egg">
+    <div ref={ref} className="h-screen bg-egg dark:bg-mixed-20">
       <div
         ref={tooltip.floatingRef}
         style={{ ...tooltip.floatingStyles, visibility: tooltip.visibility }}
-        className="fixed block bg-white rounded-md border-[1px] border-egg-900 drop-shadow-lg px-1 top-0 left-0"
+        className={[
+          "fixed",
+          "block",
+          "bg-white dark:bg-mixed-40",
+          "text-black dark:text-white",
+          "rounded-md",
+          "border-[1px]",
+          "border-egg-900 dark:border-mixed-60",
+          "drop-shadow-lg",
+          "px-1",
+          "top-0",
+          "left-0",
+        ].join(" ")}
       >
         {tooltip.content}
       </div>
@@ -461,19 +475,21 @@ export function Chart({
           height={dms.height}
           xOffset={dms.marginLeft}
           yOffset={dms.marginTop}
-          stroke="hsl(37, 70%, 80%)"
+          stroke={dark ? "#5d524c" : "hsl(37, 70%, 80%)"}
         />
         <g transform={`translate(${dms.marginLeft}, ${dms.marginTop})`}>
           <YAxis
             scale={yScale}
             label={ctrls.columns.y}
             kind={ctrls.scaleType.y}
+            stroke={dark ? "#d4d0cf" : "black"}
           />
           <g transform={`translate(0, ${dms.boundedHeight})`}>
             <XAxis
               scale={xScale}
               label={ctrls.columns.x}
               kind={ctrls.scaleType.x}
+              stroke={dark ? "#d4d0cf" : "black"}
             />
           </g>
           {

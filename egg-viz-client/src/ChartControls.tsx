@@ -45,7 +45,7 @@ function ButtonGroup<T>({
             "py-[0.75px]",
             "text-sm",
             "font-medium",
-            opt === value ? "text-white" : "text-gray-900",
+            opt === value ? "text-white" : "text-black dark:text-white",
             rounded(idx),
             "ring-[0.5px]",
             "ring-egg-700",
@@ -55,7 +55,7 @@ function ButtonGroup<T>({
             "hover:ring-1",
             "hover:ring-egg-700",
             "hover:z-10",
-            opt === value ? "bg-egg-500" : "bg-white",
+            opt === value ? "bg-egg-500" : "bg-white dark:bg-mixed-40",
             "focus:outline-none",
             "focus:ring-[2px]",
           ].join(" ")}
@@ -81,9 +81,10 @@ function RangeSelect({
 }) {
   const inputClasses = [
     "max-w-16",
-    "bg-egg-300",
+    "bg-egg-300 dark:bg-mixed-40",
     "border-b-[1.5px]",
-    "border-black",
+    "border-black dark:border-white",
+    "text-black dark:text-white",
     "h-5",
     "text-md",
     "appearance-none",
@@ -101,7 +102,7 @@ function RangeSelect({
           ]);
         }}
       />
-      <span>&le; {label} &le;</span>
+      <span className="text-black dark:text-white">&le; {label} &le;</span>
       <input
         value={range[1] ?? computed[1]}
         type="number"
@@ -133,7 +134,7 @@ function CheckBox({
         className={[
           "cursor-pointer",
           "appearance-none",
-          "bg-white",
+          "bg-white dark:bg-mixed-40",
           "checked:bg-egg-500",
           "w-4",
           "h-4",
@@ -178,8 +179,10 @@ function ChartSelect({
         "rounded-md",
         "px-2",
         "py-[0.75px]",
-        "hover:bg-egg-600",
-        "hover:text-white",
+        "hover:bg-egg-600 dark:hover:bg-mixed-60",
+        "text-black dark:text-white",
+        "hover:text-white dark:hover:text-black",
+        "bg-white dark:bg-mixed-40",
         "appearance-none",
         "py-0",
         "my-[1px]",
@@ -188,11 +191,12 @@ function ChartSelect({
         "hover:ring-[1px]",
         "focus:outline-none",
         "focus:ring-[2px]",
-        "ring-egg-700",
+        "ring-egg-700 dark:ring-mixed-80",
         "transition-all",
+        "text-black dark:text-white",
       ].join(" ")}
       style={{
-        backgroundImage: `url("data:image/svg+xml;utf8,<svg fill='black' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>")`,
+        backgroundImage: `url("data:image/svg+xml;utf8,<svg fill='currentColor' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>")`,
         backgroundRepeat: "no-repeat",
         backgroundPositionX: "100%",
         backgroundPositionY: "50%",
@@ -255,7 +259,16 @@ export class ChartOptions {
 
 function ChartControlItem(props: PropsWithChildren<{}>) {
   return (
-    <div className="border-[1px] border-egg-400 rounded-md p-2 space-y-[0.5px] w-full">
+    <div
+      className={[
+        "border-[1px]",
+        "border-egg-400 dark:border-mixed-40",
+        "rounded-md",
+        "p-2",
+        "space-y-[0.5px]",
+        "w-full",
+      ].join(" ")}
+    >
       {props.children}
     </div>
   );
@@ -266,7 +279,7 @@ function ChartControlTitle({
   children,
 }: PropsWithChildren<{ label: string }>) {
   return (
-    <div className="font-bold truncate flex items-center space-x-2">
+    <div className="font-bold truncate flex items-center space-x-2 text-black dark:text-white">
       <span>{children}</span>
       <span>{label}:</span>
     </div>
@@ -295,7 +308,7 @@ function ChartControlColumns({ ctrls, setCtrls }: ChartControlProps) {
         <fa6.FaTable />
       </ChartControlTitle>
       <div className="space-x-2 w-max">
-        <span className="inline-block w-4">X:</span>
+        <span className="inline-block w-4 text-black dark:text-white">X:</span>
         <ChartSelect
           onChange={(e) => {
             const c = new ChartOptions(ctrls);
@@ -313,7 +326,7 @@ function ChartControlColumns({ ctrls, setCtrls }: ChartControlProps) {
         </ChartSelect>
       </div>
       <div className="space-x-2 w-max">
-        <span className="inline-block w-4">Y:</span>
+        <span className="inline-block w-4 text-black dark:text-white">Y:</span>
         <ChartSelect
           onChange={(e) => {
             const c = new ChartOptions(ctrls);
@@ -341,7 +354,7 @@ function ChartControlScale({ ctrls, setCtrls }: ChartControlProps) {
         <fa6.FaChartLine />
       </ChartControlTitle>
       <div className="space-x-2 truncate overflow-hidden flex items-center">
-        <span>Scale to fit:</span>
+        <span className="text-black dark:text-white">Scale to fit:</span>
         <CheckBox
           checked={!ctrls.locked}
           onChange={(_) => {
@@ -385,7 +398,7 @@ function ChartControlScale({ ctrls, setCtrls }: ChartControlProps) {
         />
       </div>
       <div className="space-x-2 w-max">
-        <span className="inline-block w-4">X: </span>
+        <span className="inline-block w-4 text-black dark:text-white">X:</span>
         <ButtonGroup<"linear" | "log">
           options={["linear", "log"]}
           value={ctrls.scaleType.x}
@@ -397,7 +410,7 @@ function ChartControlScale({ ctrls, setCtrls }: ChartControlProps) {
         />
       </div>
       <div className="space-x-2 w-max">
-        <span className="inline-block w-4">Y: </span>
+        <span className="inline-block w-4 text-black dark:text-white">Y:</span>
         <ButtonGroup<"linear" | "log">
           options={["linear", "log"]}
           value={ctrls.scaleType.y}
@@ -458,29 +471,31 @@ export function ChartControls(props: ChartControlProps) {
 
   return (
     <div>
-      {
-        <div
-          className={[
-            "space-y-1 flex flex-col bg-egg-300 p-1 rounded-md",
-            "transition-all",
-            props.open ? "opacity-1" : "opacity-0",
-            props.open ? "visible" : "invisible",
-          ].join(" ")}
-        >
-          {body}
-        </div>
-      }
+      <div
+        className={[
+          "space-y-1 flex flex-col p-1 rounded-md",
+          "bg-egg-300 dark:bg-mixed-20",
+          "transition-all",
+          props.open ? "opacity-1" : "opacity-0",
+          props.open ? "visible" : "invisible",
+        ].join(" ")}
+      >
+        {body}
+      </div>
+
       <HoverTooltip content=<span>Chart Controls</span>>
         <button
           className={[
-            "text-lg align-center p-2 bg-egg-300 absolute bottom-[14px] right-[14px] rounded-md",
+            "text-lg align-center p-2 absolute bottom-[14px] right-[14px] rounded-md",
             "transition-all",
             "disabled:pointer-events-none",
             "opacity-1",
             "disabled:opacity-0",
             "visible",
             "disable:invisible",
-            "hover:bg-egg-400",
+            "hover:bg-egg-400 hover:dark:bg-mixed-60",
+            "bg-egg-300 dark:bg-mixed-20",
+            "text-black dark:text-white",
             "focus:outline-none",
             "focus:ring-[2px]",
             "ring-egg-700",
@@ -501,9 +516,9 @@ export function ChartControls(props: ChartControlProps) {
               // "w-max",
               "z-40",
               "space-y-1",
-              "bg-egg-300",
+              "bg-egg-300 dark:bg-mixed-20",
               "p-2",
-              "border-egg-400",
+              "border-egg-400 dark:border-mixed-40",
               "border-[1px]",
               "rounded-md",
               "drop-shadow-md",

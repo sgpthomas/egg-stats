@@ -15,8 +15,8 @@ export function Sidebar(props: PropsWithChildren<Props>) {
       <button
         style={{ transform: `translate(${open ? "13.5rem" : 0}, 0)` }}
         className={[
-          "bg-egg-300",
-          "hover:bg-egg-400",
+          "bg-egg-300 dark:bg-mixed-20",
+          "hover:bg-egg-400 hover:dark:bg-mixed-60",
           "rounded-lg",
           "p-2",
           "fixed",
@@ -55,6 +55,7 @@ export function Sidebar(props: PropsWithChildren<Props>) {
             "overflow-x-hidden",
             "overflow-y-auto",
             "bg-egg-200",
+            "dark:bg-mixed-0",
             "drop-shadow-md",
             "flex",
             "flex-col",
@@ -62,7 +63,17 @@ export function Sidebar(props: PropsWithChildren<Props>) {
           ].join(" ")}
         >
           <motion.div className="flex flex-row mb-2 justify-center">
-            <span className="text-xl font-bold grow content-center truncate ml-2">
+            <span
+              className={[
+                "text-xl",
+                "font-bold",
+                "grow",
+                "content-center",
+                "truncate",
+                "ml-2",
+                "dark:text-white",
+              ].join(" ")}
+            >
               Egg Visualizer
             </span>
           </motion.div>
