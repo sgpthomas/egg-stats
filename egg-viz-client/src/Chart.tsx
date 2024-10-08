@@ -1,4 +1,5 @@
 import React, {
+  memo,
   ReactElement,
   useMemo,
   MouseEvent,
@@ -82,7 +83,7 @@ function usePointTooltip() {
     pos: tooltip?.pos,
     content: tooltip?.content,
     visibility: (!!tooltip ? "visible" : "hidden") as "visible" | "hidden",
-    set: (tt: Tooltip | undefined) => {
+    set: useCallback((tt: Tooltip | undefined) => {
       setTooltip(tt);
       if (!tt) return;
       refs.setPositionReference({
@@ -99,7 +100,7 @@ function usePointTooltip() {
           };
         },
       });
-    },
+    }, []),
   };
 }
 
@@ -147,7 +148,7 @@ function DataPointSvg({
   );
 }
 
-function Points({
+const Points = memo(function Points({
   columns,
   scales,
   colors,
@@ -182,7 +183,7 @@ function Points({
           DataPoint[],
         ];
       }),
-    [query, selectedRules],
+    [selectedRules, query],
   );
 
   const onHover = useCallback(
@@ -207,7 +208,7 @@ function Points({
         ),
       });
     },
-    [],
+    [columns.x, columns.y],
   );
 
   const rendered = useDeferredRender<[number, ReactElement, ReactElement][]>(
@@ -232,7 +233,6 @@ function Points({
                 key={`dim-${file_id}-${ptidx}`}
                 fill={colors[file_id]}
                 point={{ x: scales.x(d.pt.x), y: scales.y(d.pt.y) }}
-                onHover={onHover(d)}
                 highlight={true}
               />
             ))}
@@ -244,35 +244,30 @@ function Points({
     [scales.x, scales.y, columns.x, columns.y, colors, query],
   );
 
-  const highlightedRender = useDeferredRender<[number, ReactElement][]>(
-    () =>
-      highlightedPoints.map(([file_id, data]) => {
-        const el = (
-          <g key={`point-group-${file_id}`}>
-            {data.map((d, ptidx) => (
-              <DataPointSvg
-                key={`point-${file_id}-${ptidx}`}
-                fill={colors[file_id]}
-                point={{ x: scales.x(d.pt.x), y: scales.y(d.pt.y) }}
-                onHover={onHover(d)}
-                selected={true}
-              />
-            ))}
-          </g>
-        );
-        return [file_id, el] as [number, ReactElement];
-      }),
-    [],
-    [highlightedPoints, scales.x, scales.y, columns.x, columns.y, colors],
-  );
+  const highlightedRender = highlightedPoints.map(([file_id, data]) => {
+    const el = (
+      <g key={`point-group-${file_id}`}>
+        {data.map((d, ptidx) => (
+          <DataPointSvg
+            key={`point-${file_id}-${ptidx}`}
+            fill={colors[file_id]}
+            point={{ x: scales.x(d.pt.x), y: scales.y(d.pt.y) }}
+            onHover={onHover(d)}
+            selected={true}
+          />
+        ))}
+      </g>
+    );
+    return [file_id, el] as [number, ReactElement];
+  });
 
   return rendered
     .map(([id, el, dimEl]) => [id, selectedRules.get(id) !== null ? dimEl : el])
     .concat(highlightedRender)
     .filter(([id, _]) => selected.has(id as number));
-}
+});
 
-function Lines({
+const Lines = memo(function Lines({
   columns,
   scales,
   colors,
@@ -321,27 +316,30 @@ function Lines({
     [scales.x, scales.y],
   );
 
-  const query: [number, DataPoint[]][] = useTables({
+  const query: [number, DataPoint[], DataPoint[]][] = useTables({
     select: useCallback(
       (table: PivotTable) => {
         const data = points(table, columns.x, columns.y);
-        return [table.file_id, data] as [number, DataPoint[]];
+        const filtered = data.filter((d) => d.pt.x && d.pt.y);
+        return [table.file_id, data, filtered] as [number, DataPoint[]];
       },
-      [columns.x, columns.y, scales.x, scales.y],
+      [columns.x, columns.y],
     ),
-    combine: (results) => results.filter((q) => !!q.data).map((q) => q.data),
+    combine: (results) => {
+      return results.filter((q) => !!q.data).map((q) => q.data);
+    },
   });
 
   const lines = useDeferredRender(
     () =>
-      query.map(([id, data]) => {
+      query.map(([id, data, filtered]) => {
         return [
           id,
           <path
             fill="none"
             stroke={colors[id]}
             strokeWidth={selectedRules.get(id) !== null ? 1.0 : 2.0}
-            d={line(data) ?? undefined}
+            d={line(filtered) ?? undefined}
           />,
           <path
             fill="none"
@@ -353,7 +351,6 @@ function Lines({
       }),
     [],
     [
-      query,
       selected,
       selectedRules,
       scales.x,
@@ -375,7 +372,7 @@ function Lines({
         {selectedRules.get(id) !== null && hlLine}
       </g>
     ));
-}
+});
 
 export function Chart({
   selected,
@@ -440,6 +437,14 @@ export function Chart({
     [dms.boundedHeight, ctrls.scaleType.y, ChartOptions.range(ctrls).y[1]],
   );
 
+  const scales = useMemo(
+    () => ({
+      x: xScale,
+      y: yScale,
+    }),
+    [xScale, yScale],
+  );
+
   const tooltip = usePointTooltip();
 
   const dark = useMediaQuery("(prefers-color-scheme: dark)");
@@ -495,16 +500,17 @@ export function Chart({
           {
             <Lines
               columns={ctrls.columns}
-              scales={{ x: xScale, y: yScale }}
+              scales={scales}
               colors={colors}
               selected={selected}
               selectedRules={selectedRules}
               drawLine={ctrls.drawLine}
             />
           }
+
           <Points
             columns={ctrls.columns}
-            scales={{ x: xScale, y: yScale }}
+            scales={scales}
             colors={colors}
             selected={selected}
             setTooltip={tooltip.set}

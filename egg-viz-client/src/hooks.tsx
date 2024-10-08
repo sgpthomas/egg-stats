@@ -33,10 +33,7 @@ export function useDeferredRender<T, U = T>(
 ): T | U {
   const [state, setState] = useState<T | U>(initVal);
   useEffect(() => {
-    startTransition(() => {
-      setState(timeFn(drawFn, label));
-      return;
-    });
+    startTransition(() => setState(timeFn(drawFn, label)));
   }, deps);
   const deferred = useDeferredValue(state);
   return deferred;

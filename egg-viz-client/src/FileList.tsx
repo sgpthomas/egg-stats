@@ -1,7 +1,7 @@
 import * as d3 from "d3";
 import * as fa6 from "react-icons/fa6";
 import * as convert from "color-convert";
-import { PropsWithChildren, useEffect, useMemo, useRef } from "react";
+import { PropsWithChildren, useEffect, useMemo, useRef, useState } from "react";
 import usePersistState from "./usePersistState";
 import { PivotTable } from "./DataProcessing";
 import { useKnownFiles, useTables } from "./Fetch";
@@ -10,15 +10,30 @@ import { PiWaveSineBold } from "react-icons/pi";
 import { IoRemoveOutline } from "react-icons/io5";
 import { HoverTooltip } from "./hooks";
 
-function CollapseDiv(props: PropsWithChildren<{ expanded: boolean }>) {
+function CollapseDiv({
+  expanded,
+  open,
+  children,
+}: PropsWithChildren<{ open: boolean; expanded: boolean }>) {
+  const [animate, setAnimate] = useState(true);
+
+  // lags behind a render cycle
+  // creates the effect of only animating if we are open and expanded changed
+  useEffect(() => {
+    setAnimate(open);
+  }, [open]);
+
   return (
     <div
       style={{
-        gridTemplateRows: props.expanded ? "1fr" : "0fr",
+        gridTemplateRows: open && expanded ? "1fr" : "0fr",
       }}
-      className="transition-[grid-template-rows] duration-100 ease-in-out grid"
+      className={[
+        "ease-in-out grid",
+        open && animate && "transition-[grid-template-rows]",
+      ].join(" ")}
     >
-      <div className="overflow-hidden">{props.children}</div>
+      <div className="overflow-hidden">{children}</div>
     </div>
   );
 }
@@ -299,19 +314,17 @@ function FileItem({
                 </>
               ) : undefined}
             </div>
-            {open && (
-              <CollapseDiv expanded={exp}>
-                {table && table.data ? (
-                  <FileItemLoaded table={table.data} onRule={onRule} />
-                ) : (
-                  <div className="p-1 mt-2 bg-egg-400 dark:bg-mixed-40 rounded-md flex space-x-1 items-center animate-subtle-pulse justify-center">
-                    <span className="text-sm text-center font-bold truncate grow">
-                      Downloading
-                    </span>
-                  </div>
-                )}
-              </CollapseDiv>
-            )}
+            <CollapseDiv expanded={exp} open={open}>
+              {table && table.data ? (
+                <FileItemLoaded table={table.data} onRule={onRule} />
+              ) : (
+                <div className="p-1 mt-2 bg-egg-400 dark:bg-mixed-40 rounded-md flex space-x-1 items-center animate-subtle-pulse justify-center">
+                  <span className="text-sm text-center font-bold truncate grow">
+                    Downloading
+                  </span>
+                </div>
+              )}
+            </CollapseDiv>
           </div>
         </HoverTooltip>
       </li>
