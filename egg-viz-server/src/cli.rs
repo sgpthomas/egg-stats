@@ -16,12 +16,19 @@ pub struct Args {
     pub port: u16,
 
     /// port that the dev server is running on
+    #[cfg(debug_assertions)]
     #[argh(option, short = 'd', default = "3000")]
     pub dev_port: u16,
 
     /// open a browser window when the server starts
+    #[cfg(debug_assertions)]
     #[argh(switch, short = 'x')]
     pub external: bool,
+
+    /// don't open a browser window when the server starts
+    #[cfg(not(debug_assertions))]
+    #[argh(switch, short = 'q')]
+    pub quiet: bool,
 }
 
 pub fn cli() -> Args {
