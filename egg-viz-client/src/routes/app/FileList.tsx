@@ -8,7 +8,7 @@ import { useKnownFiles, useTables } from "./Fetch";
 import { UseQueryResult } from "@tanstack/react-query";
 import { PiWaveSineBold } from "react-icons/pi";
 import { IoRemoveOutline } from "react-icons/io5";
-import { HoverTooltip } from "./hooks";
+import { HoverTooltip, useDarkMode } from "./hooks";
 
 function CollapseDiv({
   expanded,
@@ -56,7 +56,7 @@ function FileItemLoaded({
     if (!table) return [];
     const uniqueRules: Set<string> = PivotTable.map(
       table,
-      (row) => row.rule,
+      (row) => row.rule || row.rule_name,
     ).reduce((acc: Set<string>, el: string) => {
       acc.add(el);
       return acc;
@@ -130,16 +130,14 @@ function FileItemLoaded({
       <div
         className={[
           "border-2",
-          "border-egg-400",
-          "bg-egg-300",
-          "dark:bg-mixed-40",
-          "dark:border-mixed-60",
+          "border-egg-400 dark:border-mixed-60",
+          "bg-egg-300 dark:bg-mixed-40",
           "rounded-md",
           "shadow-inner",
         ].join(" ")}
       >
         {ruleList && (
-          <div className="h-28 overflow-auto">
+          <div className="h-32 overflow-auto grid grid-rows-1">
             {[...ruleList.values()].map((rule, idx) => {
               return (
                 <div key={idx}>
@@ -147,7 +145,9 @@ function FileItemLoaded({
                     ref={selRule === idx ? selRef : undefined}
                     tabIndex={1}
                     className={[
-                      "w-full text-left pl-2",
+                      "h-full w-full",
+                      "text-nowrap",
+                      "text-left pl-2",
                       selRule === idx && "bg-egg-500 dark:bg-mixed-80",
                       selRule === idx && "text-white dark:text-black",
                       "text-black dark:text-white",
@@ -156,6 +156,7 @@ function FileItemLoaded({
                       "focus:-outline-offset-2",
                       "focus:outline-egg-700",
                       "focus:rounded-md",
+                      "font-mono text-xs",
                     ].join(" ")}
                     key={idx}
                     onClick={(e) => {
@@ -200,6 +201,8 @@ function FileItem({
 }) {
   const [exp, setExp] = usePersistState<boolean>(false, `file-item-${id}`);
 
+  const dark = useDarkMode();
+
   return (
     <>
       <li key={id}>
@@ -208,10 +211,8 @@ function FileItem({
             tabIndex={1}
             className={[
               "border-[1px]",
-              "border-egg-400",
-              "hover:bg-egg-400",
-              "dark:border-mixed-40",
-              "dark:hover:bg-mixed-60",
+              "border-egg-400 dark:border-mixed-40",
+              "hover:bg-egg-400 dark:hover:bg-mixed-40",
               "p-2",
               "rounded-md",
               "w-64",
@@ -239,7 +240,11 @@ function FileItem({
               />
               <div
                 style={{
-                  background: selected.has(id) ? colors[id] : "#fedbaa",
+                  background: selected.has(id)
+                    ? colors[id]
+                    : dark
+                      ? "#4c4c4c"
+                      : "#fedbaa",
                   borderColor: selected.has(id)
                     ? darkenColor(colors[id])
                     : colors[id],

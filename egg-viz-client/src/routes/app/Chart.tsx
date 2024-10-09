@@ -21,7 +21,7 @@ import { d3Scale, XAxis, YAxis } from "./Axis";
 import { Grid } from "./Grid";
 import { ChartOptions } from "./ChartControls";
 import { useTables } from "./Fetch";
-import { useDeferredRender, useMediaQuery } from "./hooks";
+import { useDarkMode, useDeferredRender } from "./hooks";
 
 export interface Point<T = number> {
   x: T;
@@ -321,7 +321,11 @@ const Lines = memo(function Lines({
       (table: PivotTable) => {
         const data = points(table, columns.x, columns.y);
         const filtered = data.filter((d) => d.pt.x && d.pt.y);
-        return [table.file_id, data, filtered] as [number, DataPoint[]];
+        return [table.file_id, data, filtered] as [
+          number,
+          DataPoint[],
+          DataPoint[],
+        ];
       },
       [columns.x, columns.y],
     ),
@@ -447,7 +451,7 @@ export function Chart({
 
   const tooltip = usePointTooltip();
 
-  const dark = useMediaQuery("(prefers-color-scheme: dark)");
+  const dark = useDarkMode();
 
   return (
     <div ref={ref} className="h-screen bg-egg dark:bg-mixed-20">
@@ -540,7 +544,7 @@ function points(
       x: xSel(row, idx),
       y: ySel(row, idx),
     },
-    rule: row["rule"],
+    rule: row.rule_name,
     id: table.file_id,
   }));
 }

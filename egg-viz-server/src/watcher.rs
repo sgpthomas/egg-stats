@@ -14,6 +14,7 @@ use notify::{Event, RecommendedWatcher};
 pub struct Row {
     id: String,
     iteration: u64,
+    rule_name: String,
     rule: String,
     when: String,
     name: String,

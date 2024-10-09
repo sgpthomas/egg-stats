@@ -24,8 +24,10 @@ impl_recorder! {
     Timestamp;
     identifier => "time",
     before_rewrite => |ts: &Self, _| {
-        let passed = ts.start.elapsed();
-        Some(format!("{}", passed.as_millis()))
+        Some(format!("{}", ts.start.elapsed().as_millis()))
+    },
+    after_rewrite => |ts: &Self, _| {
+        Some(format!("{}", ts.start.elapsed().as_millis()))
     }
 }
 

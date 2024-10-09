@@ -55,6 +55,10 @@ export function useMediaQuery(query: string) {
   return matches;
 }
 
+export function useDarkMode() {
+  return useMediaQuery("(prefers-color-scheme: dark)");
+}
+
 export function HoverTooltip({
   children,
   content,

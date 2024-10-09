@@ -46,32 +46,50 @@ export function setIntersect<T>(set0?: T[], set1?: T[]): T[] {
   return res;
 }
 
+export function mkObject(keys: string[], values: any[]) {
+  let obj: any = {};
+
+  const zipped = keys.map((el, idx) => [el, values[idx]]);
+
+  for (const [k, v] of zipped) {
+    if (!k || !v) continue;
+
+    obj[k] = v;
+  }
+
+  return obj;
+}
+
 export class PivotTable {
   file_id: number;
 
   keyed_rows: [Key, any][];
   value_names: string[];
 
+  header: string[];
   keys: string[];
   name: string;
   value: string;
 
-  constructor(file_id: number, keys: string[], name?: string, value?: string) {
+  constructor(
+    file_id: number,
+    header: string[],
+    name?: string,
+    value?: string,
+  ) {
     this.file_id = file_id;
     this.keyed_rows = [];
     this.value_names = [];
-    this.keys = keys;
+    this.header = header;
+    this.keys = header.slice(0, header.length - 2);
     this.name = name ?? "name";
     this.value = value ?? "value";
   }
 
-  static addRow(table: PivotTable, row: any) {
+  static addRow(table: PivotTable, rawRow: string[]) {
+    const row = mkObject(table.header, rawRow);
     // compute the key of the row
     const key = table.keys.map((key) => {
-      if (!(key in row)) {
-        throw new Error(`${key} not present in ${row}`);
-      }
-
       return row[key];
     });
 
@@ -93,7 +111,7 @@ export class PivotTable {
     table.keyed_rows.push([key, new_val]);
   }
 
-  static addRows(table: PivotTable, rows: any[]) {
+  static addRows(table: PivotTable, rows: string[][]) {
     for (const row of rows) {
       PivotTable.addRow(table, row);
     }

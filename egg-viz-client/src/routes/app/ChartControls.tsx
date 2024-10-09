@@ -179,7 +179,7 @@ function ChartSelect({
         "rounded-md",
         "px-2",
         "py-[0.75px]",
-        "hover:bg-egg-600 dark:hover:bg-mixed-60",
+        "hover:bg-egg-600 dark:hover:bg-mixed-80",
         "text-black dark:text-white",
         "hover:text-white dark:hover:text-black",
         "bg-white dark:bg-mixed-40",

@@ -129,26 +129,39 @@ async fn main() {
     #[cfg(not(debug_assertions))]
     {
         println!("production mode");
-        let routes = routes
+        routes = routes
             .or(webfiles::routes())
             .or(warp::path::end()
                 .map(|| warp::redirect(warp::http::Uri::from_static("/index.html"))))
             .with(warp::cors().allow_any_origin());
 
-        if webbrowser::open("http://localhost:8080").is_err() {
+        if webbrowser::open(&format!("http://localhost:8080/reset/{}", args.port)).is_err() {
             println!("Unable to open webbrowser.");
-            println!("Server is running on `http://localhost:8080");
+            println!("Server is running on `http://localhost:{}", args.port);
         }
 
-        warp::serve(routes).run(([127, 0, 0, 1], 8080)).await;
+        warp::serve(routes).run(([127, 0, 0, 1], args.port)).await;
         return;
     }
 
     #[cfg(debug_assertions)]
     {
         println!("development mode");
+
         let routes = routes.with(warp::cors().allow_any_origin());
-        warp::serve(routes).run(([127, 0, 0, 1], 8080)).await;
+
+        if args.external
+            && webbrowser::open(&format!(
+                "http://localhost:{}/reset/{}",
+                args.dev_port, args.port
+            ))
+            .is_err()
+        {
+            println!("Unable to open webbrowser.");
+            println!("Server is running on `http://localhost:{}", args.port);
+        }
+
+        warp::serve(routes).run(([127, 0, 0, 1], args.port)).await;
         return;
     }
 }

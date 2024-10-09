@@ -12,15 +12,13 @@ pub struct LoggingScheduler<'a, S, L, N> {
 }
 
 pub fn write_headers(path: impl AsRef<Path>) {
-    OpenOptions::new()
+    let mut file = OpenOptions::new()
         .truncate(true)
         .write(true)
         .create(true)
         .open(path)
         .unwrap();
-
-    // let headers: [&str; 6] = ["id", "iteration", "rule", "when", "name", "value"];
-    // writeln!(file, "{}", headers.join(",")).unwrap();
+    writeln!(&mut file, "id,iteration,rule_name,rule,when,name,value").unwrap()
 }
 
 impl<'a, S, L, N> LoggingScheduler<'a, S, L, N> {
@@ -86,15 +84,24 @@ impl<'a, S, L, N> LoggingScheduler<'a, S, L, N> {
     fn write(
         &mut self,
         iteration: usize,
-        rule_name: &str,
+        rule: &egg::Rewrite<L, N>,
         typ: &str,
         id: Cow<'static, str>,
         datum: String,
-    ) {
+    ) where
+        L: egg::Language + std::fmt::Display,
+        N: egg::Analysis<L>,
+    {
         writeln!(
             &mut self.out_file,
-            "{},{},{},{},{},{}",
-            self.identifier, iteration, rule_name, typ, id, datum
+            "{},{},{},{},{},{},{}",
+            self.identifier,
+            iteration,
+            rule.name,
+            rewrite_str(rule),
+            typ,
+            id,
+            datum
         )
         .unwrap();
     }
@@ -111,10 +118,25 @@ where
     }
 }
 
+fn rewrite_str<L, N>(rewrite: &egg::Rewrite<L, N>) -> String
+where
+    L: egg::Language + std::fmt::Display,
+    N: egg::Analysis<L>,
+{
+    if let (Some(searcher), Some(applier)) = (
+        rewrite.searcher.get_pattern_ast(),
+        rewrite.applier.get_pattern_ast(),
+    ) {
+        format!("{searcher} => {applier}")
+    } else {
+        format!("name_{}", rewrite.name)
+    }
+}
+
 impl<'a, S, L, N> egg::RewriteScheduler<L, N> for LoggingScheduler<'a, S, L, N>
 where
     S: egg::RewriteScheduler<L, N>,
-    L: egg::Language,
+    L: egg::Language + std::fmt::Display,
     N: egg::Analysis<L>,
 {
     fn can_stop(&mut self, iteration: usize) -> bool {
@@ -151,7 +173,7 @@ where
             .into_iter()
             .for_each(|(id, datum)| {
                 if let Some(datum) = datum {
-                    self.write(iteration, rewrite.name.as_str(), "before_search", id, datum);
+                    self.write(iteration, rewrite, "before_search", id, datum);
                 }
             });
 
@@ -171,7 +193,7 @@ where
             .into_iter()
             .for_each(|(id, datum)| {
                 if let Some(datum) = datum {
-                    self.write(iteration, rewrite.name.as_str(), "before_search", id, datum);
+                    self.write(iteration, rewrite, "before_search", id, datum);
                 }
             });
 
@@ -204,13 +226,7 @@ where
             .into_iter()
             .for_each(|(id, datum)| {
                 if let Some(datum) = datum {
-                    self.write(
-                        iteration,
-                        rewrite.name.as_str(),
-                        "before_rewrite",
-                        id,
-                        datum,
-                    );
+                    self.write(iteration, rewrite, "before_rewrite", id, datum);
                 }
             });
 
@@ -230,7 +246,7 @@ where
             .into_iter()
             .for_each(|(id, datum)| {
                 if let Some(datum) = datum {
-                    self.write(iteration, rewrite.name.as_str(), "after_rewrite", id, datum);
+                    self.write(iteration, rewrite, "after_rewrite", id, datum);
                 }
             });
 
