@@ -1,6 +1,6 @@
 [package]
 name = "egg-stats"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 description = "Generate and view statistics for egg e-graphs"
 homepage = "https://github.com/sgpthomas/egg-stats"
