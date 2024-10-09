@@ -71,7 +71,6 @@ fn build_client_routes(
         .map(|entry| match entry {
             include_dir::DirEntry::Dir(d) => build_client_routes(d.entries()),
             include_dir::DirEntry::File(f) => {
-                // let contents = String::from_utf8(f.contents().to_vec()).unwrap_or_default();
                 let reply = WebfileReply::new(f.path(), f.contents().to_vec());
                 let x = build_path(f.path().to_string_lossy());
                 warp::any().and(x).map(move || reply.clone()).boxed()
@@ -88,4 +87,19 @@ fn build_client_routes(
 
 pub fn routes() -> warp::filters::BoxedFilter<(WebfileReply,)> {
     build_client_routes(CLIENT_FILES.entries())
+}
+
+pub fn index_route() -> warp::filters::BoxedFilter<(WebfileReply,)> {
+    warp::any()
+        .map(|| {
+            WebfileReply::new(
+                "index.html",
+                CLIENT_FILES
+                    .get_file("index.html")
+                    .unwrap()
+                    .contents()
+                    .to_vec(),
+            )
+        })
+        .boxed()
 }

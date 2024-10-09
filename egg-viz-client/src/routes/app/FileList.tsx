@@ -1,7 +1,14 @@
 import * as d3 from "d3";
 import * as fa6 from "react-icons/fa6";
 import * as convert from "color-convert";
-import { PropsWithChildren, useEffect, useMemo, useRef, useState } from "react";
+import {
+  PropsWithChildren,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import usePersistState from "./usePersistState";
 import { PivotTable } from "./DataProcessing";
 import { useKnownFiles, useTables } from "./Fetch";
@@ -9,6 +16,7 @@ import { UseQueryResult } from "@tanstack/react-query";
 import { PiWaveSineBold } from "react-icons/pi";
 import { IoRemoveOutline } from "react-icons/io5";
 import { HoverTooltip, useDarkMode } from "./hooks";
+import { ServerConfigContext } from "../../ServerContext";
 
 function CollapseDiv({
   expanded,
@@ -353,6 +361,8 @@ export function FileList({
   const knownFiles = useKnownFiles();
   const tables = useTables({});
 
+  const serverConfig = useContext(ServerConfigContext);
+
   if (knownFiles.isPending)
     return (
       <div className="p-1 bg-egg-300 rounded-md flex space-x-1 items-center animate-subtle-pulse justify-center">
@@ -361,7 +371,7 @@ export function FileList({
         </span>
         {open && (
           <span className="text-sm text-center font-bold truncate grow">
-            Connecting to port 8080
+            Connecting to port {serverConfig?.port}
           </span>
         )}
       </div>

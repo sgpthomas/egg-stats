@@ -131,12 +131,11 @@ async fn main() {
         println!("production mode");
         let routes = routes
             .or(webfiles::routes())
-            .or(warp::path::end()
-                .map(|| warp::redirect(warp::http::Uri::from_static("/index.html"))))
+            .or(webfiles::index_route())
             .with(warp::cors().allow_any_origin());
 
         if !args.quiet
-            && webbrowser::open(&format!("http://localhost:8080/reset/{}", args.port)).is_err()
+            && webbrowser::open(&format!("http://localhost:{p}/reset/{p}", p = args.port)).is_err()
         {
             println!("Unable to open webbrowser.");
             println!("Server is running on `http://localhost:{}", args.port);

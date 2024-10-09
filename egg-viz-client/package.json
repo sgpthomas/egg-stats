@@ -39,7 +39,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build --outdir ../egg-viz-server/build",
+    "build": "BUILD_PATH='../egg-viz-server/build' react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
