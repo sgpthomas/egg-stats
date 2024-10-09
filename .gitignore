@@ -1,3 +1,4 @@
 /target
 /egg-viz-server/target
 /*.csv
+/publish.sh
