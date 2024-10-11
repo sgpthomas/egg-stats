@@ -6,6 +6,7 @@ import React, {
   useState,
   useEffect,
   useCallback,
+  useContext,
 } from "react";
 import { ChartSettings, useChartDimensions } from "./useChartDimensions";
 import * as d3 from "d3";
@@ -19,9 +20,13 @@ import {
 } from "@floating-ui/react";
 import { d3Scale, XAxis, YAxis } from "./Axis";
 import { Grid } from "./Grid";
-import { ChartOptions } from "./ChartControls";
 import { useTables } from "./Fetch";
-import { useDarkMode, useDeferredRender } from "./hooks";
+import { useDeferredRender } from "./hooks";
+import {
+  ChartDispatchContext,
+  ChartOptionsContext,
+  ChartOptions,
+} from "./ChartOptions";
 
 export interface Point<T = number> {
   x: T;
@@ -200,9 +205,19 @@ const Points = memo(function Points({
         },
         content: (
           <div className="flex flex-col">
-            {d.rule && <span>rule: {d.rule}</span>}
+            {d.rule && (
+              <span>
+                <b>rule: </b>
+                {d.rule}
+              </span>
+            )}
             <span>
-              {columns.x}: {d.pt.x.toFixed(2)} {columns.y}: {d.pt.y.toFixed(2)}
+              <b>{columns.x}: </b>
+              {d.pt.x.toFixed(2)}
+            </span>
+            <span>
+              <b>{columns.y}: </b>
+              {d.pt.y.toFixed(2)}
             </span>
           </div>
         ),
@@ -364,7 +379,6 @@ const Lines = memo(function Lines({
       line,
       highlightLine,
     ],
-    "rendering lines",
   );
 
   if (!drawLine) return;
@@ -380,15 +394,11 @@ const Lines = memo(function Lines({
 
 export function Chart({
   selected,
-  ctrls,
-  setCtrls,
   marginLeft,
   colors = d3.schemeAccent,
   selectedRules = new Map(),
 }: {
   selected: Set<number>;
-  ctrls: ChartOptions;
-  setCtrls: (x: ChartOptions) => void;
   marginLeft: number;
   colors?: readonly string[];
   selectedRules?: Map<number, string | null>;
@@ -398,6 +408,9 @@ export function Chart({
     marginRight: 20,
     marginBottom: 50,
   };
+
+  const ctrls = useContext(ChartOptionsContext);
+  const setCtrls = useContext(ChartDispatchContext);
 
   const [ref, dms] = useChartDimensions(chartSettings);
 
@@ -451,7 +464,11 @@ export function Chart({
 
   const tooltip = usePointTooltip();
 
-  const dark = useDarkMode();
+  // const [isDark, mode, _] = useDarkMode();
+  // console.log(mode);
+  // useEffect(() => {
+  //   console.log("dark changed");
+  // }, [mode]);
 
   return (
     <div ref={ref} className="h-screen bg-egg dark:bg-mixed-20">
@@ -484,21 +501,18 @@ export function Chart({
           height={dms.height}
           xOffset={dms.marginLeft}
           yOffset={dms.marginTop}
-          stroke={dark ? "#5d524c" : "hsl(37, 70%, 80%)"}
         />
         <g transform={`translate(${dms.marginLeft}, ${dms.marginTop})`}>
           <YAxis
             scale={yScale}
             label={ctrls.columns.y}
             kind={ctrls.scaleType.y}
-            stroke={dark ? "#d4d0cf" : "black"}
           />
           <g transform={`translate(0, ${dms.boundedHeight})`}>
             <XAxis
               scale={xScale}
               label={ctrls.columns.x}
               kind={ctrls.scaleType.x}
-              stroke={dark ? "#d4d0cf" : "black"}
             />
           </g>
           {

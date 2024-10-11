@@ -13,15 +13,15 @@ export const ServerConfigDispatchContext = createContext<
 
 export function ServerConfigProvider({ children }: PropsWithChildren<{}>) {
   const savedContext = localStorage.getItem("server-context");
-  let config = initialConfig;
+  let loadedConfig = initialConfig;
   if (savedContext) {
-    config = JSON.parse(savedContext);
+    loadedConfig = JSON.parse(savedContext);
   }
 
-  const [tasks, dispatch] = useReducer(portReducer, config);
+  const [config, dispatch] = useReducer(portReducer, loadedConfig);
 
   return (
-    <ServerConfigContext.Provider value={tasks}>
+    <ServerConfigContext.Provider value={config}>
       <ServerConfigDispatchContext.Provider value={dispatch}>
         {children}
       </ServerConfigDispatchContext.Provider>

@@ -3,7 +3,7 @@ import * as d3 from "d3";
 export type Datum = number | string;
 export type Key = string[];
 
-function arraysEqual(a: any[], b: any[]) {
+export function arraysEqual(a: any[], b: any[]) {
   if (a === b) return true;
   if (a == null || b == null) return false;
   if (a.length !== b.length) return false;
@@ -14,32 +14,45 @@ function arraysEqual(a: any[], b: any[]) {
   return true;
 }
 
-export function setHas<T>(set: T[], item: T): boolean {
-  return !!set.find((x) => x === item);
+type Eq<T> = (a: T, b: T) => boolean;
+const tripleEq = <T>(a: T, b: T) => a === b;
+
+export type ASet<T> = T[];
+
+export function setHas<T>(
+  set: ASet<T>,
+  item: T,
+  eq: Eq<T> = tripleEq,
+): boolean {
+  return !!set.find((x) => eq(x, item));
 }
 
-export function setAdd<T>(set: T[], item: T): T[] {
-  if (item && !setHas(set, item)) {
+export function setAdd<T>(set: ASet<T>, item: T, eq: Eq<T> = tripleEq): T[] {
+  if (item && !setHas(set, item, eq)) {
     set.push(item);
   }
   return set;
 }
 
-export function setIntersect<T>(set0?: T[], set1?: T[]): T[] {
+export function setIntersect<T>(
+  set0?: ASet<T>,
+  set1?: ASet<T>,
+  eq: Eq<T> = tripleEq,
+): T[] {
   if (!set0) return set1 ?? [];
   if (!set1) return set0;
 
   const res: T[] = [];
 
   for (const x0 of set0) {
-    if (setHas(set1, x0)) {
-      setAdd(res, x0);
+    if (setHas(set1, x0, eq)) {
+      setAdd(res, x0, eq);
     }
   }
 
   for (const x1 of set1) {
-    if (setHas(set0, x1)) {
-      setAdd(res, x1);
+    if (setHas(set0, x1, eq)) {
+      setAdd(res, x1, eq);
     }
   }
 

@@ -10,7 +10,6 @@ export function Grid({
   yOffset,
   xNTicks,
   yNTicks,
-  stroke = "lightGray",
 }: {
   xScale: d3Scale;
   yScale: d3Scale;
@@ -20,7 +19,6 @@ export function Grid({
   yOffset: number;
   xNTicks?: number;
   yNTicks?: number;
-  stroke?: string;
 }) {
   const xTicks = useMemo(() => {
     return computeTicks(xScale, 100).map((value) => xScale(value));
@@ -31,7 +29,7 @@ export function Grid({
   }, [yScale.domain().join("-"), yScale.range().join("-"), yNTicks]);
 
   return (
-    <svg>
+    <svg className="stroke-[#F0D4A8] dark:stroke-[#5d524c]">
       {xTicks.map((offset, idx) => (
         <line
           key={`x-${idx}`}
@@ -39,7 +37,6 @@ export function Grid({
           x2={offset + xOffset}
           y1={0}
           y2={height}
-          stroke={stroke}
         />
       ))}
 
@@ -50,7 +47,7 @@ export function Grid({
           x2={width}
           y1={offset + yOffset}
           y2={offset + yOffset}
-          stroke={stroke}
+          // stroke={stroke}
         />
       ))}
     </svg>

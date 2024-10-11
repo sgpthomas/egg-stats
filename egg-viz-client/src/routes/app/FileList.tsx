@@ -10,12 +10,12 @@ import {
   useState,
 } from "react";
 import usePersistState from "./usePersistState";
-import { PivotTable } from "./DataProcessing";
+import { arraysEqual, ASet, PivotTable, setAdd } from "./DataProcessing";
 import { useKnownFiles, useTables } from "./Fetch";
 import { UseQueryResult } from "@tanstack/react-query";
 import { PiWaveSineBold } from "react-icons/pi";
 import { IoRemoveOutline } from "react-icons/io5";
-import { HoverTooltip, useDarkMode } from "./hooks";
+import { HoverTooltip } from "./hooks";
 import { ServerConfigContext } from "../../ServerContext";
 
 function CollapseDiv({
@@ -60,15 +60,18 @@ function FileItemLoaded({
   onRule: (rule: string | null) => void;
 }) {
   // TODO move this into pivot table
-  const ruleList: string[] = useMemo(() => {
+  const ruleList: ASet<[string, string]> = useMemo(() => {
     if (!table) return [];
-    const uniqueRules: Set<string> = PivotTable.map(
+    const uniqueRules: ASet<[string, string]> = PivotTable.map(
       table,
-      (row) => row.rule || row.rule_name,
-    ).reduce((acc: Set<string>, el: string) => {
-      acc.add(el);
-      return acc;
-    }, new Set());
+      (row) => row,
+    )
+      .filter((row) => row.when === "before_rewrite")
+      .map((row) => [row.rule_name, row.rule || ""] as [string, string])
+      .reduce((acc: ASet<[string, string]>, el: [string, string]) => {
+        setAdd(acc, el, arraysEqual);
+        return acc;
+      }, []);
     return [...uniqueRules];
   }, [table]);
 
@@ -80,10 +83,15 @@ function FileItemLoaded({
   const selRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
-    if (selRule === null || !(0 <= selRule && selRule < ruleList.length)) {
+    if (
+      selRule === null ||
+      !(0 <= selRule && selRule < ruleList.length) ||
+      !ruleList[selRule]
+    ) {
       onRule(null);
     } else {
-      onRule(ruleList[selRule] as string);
+      const [rule_name, _rule] = ruleList[selRule];
+      onRule(rule_name);
     }
   }, [selRule]);
 
@@ -145,8 +153,8 @@ function FileItemLoaded({
         ].join(" ")}
       >
         {ruleList && (
-          <div className="h-32 overflow-auto grid grid-rows-1">
-            {[...ruleList.values()].map((rule, idx) => {
+          <div className="h-32 overflow-auto grid">
+            {[...ruleList.values()].map(([rule_name, rule], idx) => {
               return (
                 <div key={idx}>
                   <button
@@ -176,7 +184,14 @@ function FileItemLoaded({
                       e.stopPropagation();
                     }}
                   >
-                    {rule}
+                    {rule === "" ? (
+                      rule_name
+                    ) : (
+                      <span>
+                        <span className="font-bold">{rule_name}: </span>
+                        {rule}
+                      </span>
+                    )}
                   </button>
                 </div>
               );
@@ -208,8 +223,6 @@ function FileItem({
   onRule: (rule: string | null) => void;
 }) {
   const [exp, setExp] = usePersistState<boolean>(false, `file-item-${id}`);
-
-  const dark = useDarkMode();
 
   return (
     <>
@@ -248,11 +261,7 @@ function FileItem({
               />
               <div
                 style={{
-                  background: selected.has(id)
-                    ? colors[id]
-                    : dark
-                      ? "#4c4c4c"
-                      : "#fedbaa",
+                  background: selected.has(id) ? colors[id] : undefined,
                   borderColor: selected.has(id)
                     ? darkenColor(colors[id])
                     : colors[id],
@@ -282,6 +291,7 @@ function FileItem({
                   "before:transition-all",
                   "peer-focus:ring-[2px]",
                   "peer-focus:ring-egg-700",
+                  "bg-egg-200 dark:bg-mixed-40",
                 ].join(" ")}
               >
                 {selected.has(id) ? (
@@ -363,43 +373,65 @@ export function FileList({
 
   const serverConfig = useContext(ServerConfigContext);
 
-  if (knownFiles.isPending)
-    return (
-      <div className="p-1 bg-egg-300 rounded-md flex space-x-1 items-center animate-subtle-pulse justify-center">
-        <span className={[open && "ml-1"].join("")}>
-          <fa6.FaCircleNotch className="animate-spin" />
-        </span>
-        {open && (
-          <span className="text-sm text-center font-bold truncate grow">
-            Connecting to port {serverConfig?.port}
-          </span>
-        )}
-      </div>
-    );
+  const errorClasses = [
+    "p-1",
+    "bg-egg-300 dark:bg-mixed-20",
+    "rounded-md",
+    "flex",
+    "space-x-1",
+    "items-center",
+    !open && "ml-[13.5rem] mr-[0.45rem]",
+  ].join(" ");
 
-  if (knownFiles.error)
+  if (knownFiles.isPending) {
+    const text = `Connecting to port ${serverConfig?.port}`;
     return (
-      <div className="p-1 bg-egg-300 rounded-md flex space-x-1 items-center justify-center">
-        <span className={[open && "ml-1"].join("")}>
-          <fa6.FaCircleExclamation className="fill-red-800" />
-        </span>
-        {open && (
-          <span className="text-sm text-center text-red-800 font-bold grow truncate">
-            Could not find server
+      <HoverTooltip content={text} enabled={!open}>
+        <div className={`${errorClasses} animate-subtle-pulse`}>
+          <span className={[open && "ml-1", !open && "grow"].join(" ")}>
+            <fa6.FaCircleNotch className="animate-spin text-black dark:text-white mx-auto" />
           </span>
-        )}
-      </div>
+          {open && (
+            <span className="text-sm text-center font-bold truncate grow text-black dark:text-white">
+              {text}
+            </span>
+          )}
+        </div>
+      </HoverTooltip>
     );
+  }
 
-  if (!knownFiles.data)
+  if (knownFiles.error) {
+    const text = "Could not find server";
     return (
-      <div className="p-1 bg-egg-300 rounded-md flex space-x-1 items-center">
-        <span>
-          <fa6.FaCircleExclamation className="ml-1" />
-        </span>
-        <span className="text-sm text-center grow">Invalid data</span>
-      </div>
+      <HoverTooltip content={text} enabled={!open}>
+        <div className={`${errorClasses}`}>
+          <span className={[open && "ml-1", !open && "grow"].join(" ")}>
+            <fa6.FaCircleExclamation className="fill-red-800 dark:fill-red-400 mx-auto" />
+          </span>
+          {open && (
+            <span className="text-sm text-center text-red-800 dark:text-red-400 font-bold grow truncate">
+              {text}
+            </span>
+          )}
+        </div>
+      </HoverTooltip>
     );
+  }
+
+  if (!knownFiles.data) {
+    const text = "Invalid data";
+    return (
+      <HoverTooltip content={text} enabled={!open}>
+        <div className={`${errorClasses}`}>
+          <span className={[open && "ml-1", !open && "grow"].join(" ")}>
+            <fa6.FaCircleExclamation className="text-black dark:text-white mx-auto" />
+          </span>
+          <span className="text-sm text-center grow">{text}</span>
+        </div>
+      </HoverTooltip>
+    );
+  }
 
   return (
     <ul className="space-y-1 font-medium p-1 rounded-md bg-egg-300 dark:bg-mixed-20">

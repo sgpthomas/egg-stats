@@ -1,4 +1,3 @@
-import { Point } from "./Chart";
 import * as fa6 from "react-icons/fa6";
 import {
   FloatingPortal,
@@ -7,11 +6,23 @@ import {
   useFloating,
   useInteractions,
 } from "@floating-ui/react";
-import { ChangeEvent, PropsWithChildren, useCallback, useState } from "react";
+import {
+  ChangeEvent,
+  PropsWithChildren,
+  useCallback,
+  useContext,
+  useState,
+} from "react";
 import { useTables } from "./Fetch";
 import { PivotTable, setIntersect } from "./DataProcessing";
 import { UseQueryResult } from "@tanstack/react-query";
 import { HoverTooltip } from "./hooks";
+import {
+  ChartDispatchContext,
+  ChartOptions,
+  ChartOptionsContext,
+  DarkModeOpts,
+} from "./ChartOptions";
 
 function ButtonGroup<T>({
   options,
@@ -207,56 +218,6 @@ function ChartSelect({
   );
 }
 
-export class ChartOptions {
-  scaleType: Point<"linear" | "log">;
-  nTicks: Point<number>;
-  drawLine: boolean;
-  columns: Point<string>;
-  locked: boolean;
-  userRange: Point<[number?, number?]>;
-  computedRange: Point<[number, number]>;
-
-  constructor(other?: ChartOptions) {
-    this.scaleType = other?.scaleType ?? { x: "linear", y: "linear" };
-    this.nTicks = other?.nTicks ?? { x: 100, y: 100 };
-    this.drawLine = other?.drawLine ?? true;
-    this.columns = other?.columns ?? { x: "index", y: "cost" };
-    this.locked = other?.locked ?? false;
-    this.userRange = other?.userRange ?? {
-      x: [undefined, undefined],
-      y: [undefined, undefined],
-    };
-    this.computedRange = other?.computedRange ?? {
-      x: [0, 100],
-      y: [0, 100],
-    };
-  }
-
-  static range(self: ChartOptions): Point<[number, number]> {
-    if (self.locked) {
-      return {
-        x: [
-          self.userRange.x[0] ?? self.computedRange.x[0],
-          self.userRange.x[1] ?? self.computedRange.x[1],
-        ],
-        y: [
-          self.userRange.y[0] ?? self.computedRange.y[0],
-          self.userRange.y[1] ?? self.computedRange.y[1],
-        ],
-      };
-    } else {
-      return self.computedRange;
-    }
-  }
-
-  static lockRange(self: ChartOptions, locked: boolean) {
-    self.locked = locked;
-    if (!locked) {
-      self.userRange = structuredClone(self.computedRange);
-    }
-  }
-}
-
 function ChartControlItem(props: PropsWithChildren<{}>) {
   return (
     <div
@@ -287,19 +248,23 @@ function ChartControlTitle({
 }
 
 interface ChartControlProps {
-  ctrls: ChartOptions;
-  setCtrls: (x: ChartOptions) => void;
   open: boolean;
 }
 
-function ChartControlColumns({ ctrls, setCtrls }: ChartControlProps) {
+function ChartControlColumns({}: ChartControlProps) {
+  const ctrls = useContext(ChartOptionsContext);
+  const setCtrls = useContext(ChartDispatchContext);
+
   const columnValues = useTables({
     select: useCallback((table: PivotTable) => table.value_names, []),
     combine: (queries: UseQueryResult<string[]>[]) =>
       queries
         ?.filter((t) => !!t.data)
         .map((t) => t.data)
-        .reduce<string[] | undefined>(setIntersect, undefined) ?? [],
+        .reduce<string[] | undefined>(
+          (a, b) => setIntersect(a, b),
+          undefined,
+        ) ?? [],
   });
 
   return (
@@ -347,7 +312,10 @@ function ChartControlColumns({ ctrls, setCtrls }: ChartControlProps) {
   );
 }
 
-function ChartControlScale({ ctrls, setCtrls }: ChartControlProps) {
+function ChartControlScale({}: ChartControlProps) {
+  const ctrls = useContext(ChartOptionsContext);
+  const setCtrls = useContext(ChartDispatchContext);
+
   return (
     <ChartControlItem>
       <ChartControlTitle label="Scales">
@@ -425,7 +393,10 @@ function ChartControlScale({ ctrls, setCtrls }: ChartControlProps) {
   );
 }
 
-function ChartControlDrawLine({ ctrls, setCtrls }: ChartControlProps) {
+function ChartControlDrawLine({}: ChartControlProps) {
+  const ctrls = useContext(ChartOptionsContext);
+  const setCtrls = useContext(ChartDispatchContext);
+
   return (
     <ChartControlItem>
       <div className="space-x-2 w-max flex items-center">
@@ -444,12 +415,32 @@ function ChartControlDrawLine({ ctrls, setCtrls }: ChartControlProps) {
   );
 }
 
+function ChartControlDarkMode({}: ChartControlProps) {
+  const ctrls = useContext(ChartOptionsContext);
+  const setCtrls = useContext(ChartDispatchContext);
+
+  return (
+    <ChartControlItem>
+      <ButtonGroup<DarkModeOpts>
+        options={["system", "light", "dark"]}
+        labels={["System", "Light", "Dark"]}
+        value={ctrls.darkMode}
+        onChange={(v) => {
+          ctrls.darkMode = v;
+          setCtrls(new ChartOptions(ctrls));
+        }}
+      />
+    </ChartControlItem>
+  );
+}
+
 export function ChartControls(props: ChartControlProps) {
   const body = (
     <>
       {<ChartControlColumns {...props} />}
       {<ChartControlScale {...props} />}
       {<ChartControlDrawLine {...props} />}
+      {<ChartControlDarkMode {...props} />}
     </>
   );
 

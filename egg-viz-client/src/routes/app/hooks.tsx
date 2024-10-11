@@ -17,6 +17,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import usePersistState from "./usePersistState";
 
 export function timeFn<T>(fn: () => T, label?: string): T {
   const start = performance.now();
@@ -55,9 +56,43 @@ export function useMediaQuery(query: string) {
   return matches;
 }
 
-export function useDarkMode() {
-  return useMediaQuery("(prefers-color-scheme: dark)");
-}
+// export function useDarkMode(): [
+//   boolean,
+//   DarkModeOpts,
+//   (v: DarkModeOpts) => void,
+// ] {
+//   const [darkMode, setDarkMode] = usePersistState<DarkModeOpts>(
+//     "system",
+//     "dark-mode",
+//   );
+//   const systemDark = useMediaQuery("(prefers-color-scheme: dark)");
+
+//   useEffect(() => {
+//     switch (darkMode) {
+//       case "system":
+//         if (systemDark) {
+//           document.documentElement.classList.add("dark");
+//         } else {
+//           document.documentElement.classList.remove("dark");
+//         }
+//         return;
+//       case "light":
+//         document.documentElement.classList.remove("dark");
+//         return;
+//       case "dark":
+//         document.documentElement.classList.add("dark");
+//         return;
+//     }
+//   }, [darkMode, systemDark]);
+
+//   useEffect(() => {
+//     console.log("mode changed...");
+//   }, [darkMode]);
+
+//   const isDark = darkMode === "system" ? systemDark : darkMode === "dark";
+
+//   return [isDark, darkMode, setDarkMode];
+// }
 
 export function HoverTooltip({
   children,
@@ -70,7 +105,7 @@ export function HoverTooltip({
     whileElementsMounted: autoUpdate,
   },
 }: PropsWithChildren<{
-  content: ReactElement;
+  content: ReactElement | string;
   enabled?: boolean;
   floating?: UseFloatingOptions;
 }>) {

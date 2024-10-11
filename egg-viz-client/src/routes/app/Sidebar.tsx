@@ -2,11 +2,10 @@ import { PropsWithChildren } from "react";
 import usePersistState from "./usePersistState";
 import { motion } from "framer-motion";
 
-type Props = {
-  onChange?: (open: boolean) => void;
-};
-
-export function Sidebar(props: PropsWithChildren<Props>) {
+export function Sidebar({
+  children,
+  onChange,
+}: PropsWithChildren<{ onChange?: (open: boolean) => void }>) {
   const [open, setOpen] = usePersistState<boolean>(true, "sidebar-open");
   const width = open ? "0rem" : "-76%";
 
@@ -31,7 +30,7 @@ export function Sidebar(props: PropsWithChildren<Props>) {
           "drop-shadow-md",
         ].join(" ")}
         onClick={(_e) => {
-          if (props.onChange) props.onChange(!open);
+          if (onChange) onChange(!open);
           setOpen(!open);
         }}
       >
@@ -40,6 +39,7 @@ export function Sidebar(props: PropsWithChildren<Props>) {
       <motion.div
         style={{ translateX: width }}
         className={[
+          "min-w-[17.5rem]",
           "z-10",
           "fixed",
           "ease-in-out",
@@ -63,10 +63,10 @@ export function Sidebar(props: PropsWithChildren<Props>) {
           ].join(" ")}
         >
           <motion.div className="flex flex-row mb-2 justify-center">
-            <span
+            <h1
               className={[
                 "text-xl",
-                "font-bold",
+                "font-extrabold",
                 "grow",
                 "content-center",
                 "truncate",
@@ -75,9 +75,9 @@ export function Sidebar(props: PropsWithChildren<Props>) {
               ].join(" ")}
             >
               Egg Visualizer
-            </span>
+            </h1>
           </motion.div>
-          {props.children}
+          {children}
         </motion.div>
       </motion.div>
     </div>

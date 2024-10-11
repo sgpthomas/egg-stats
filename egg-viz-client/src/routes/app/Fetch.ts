@@ -28,15 +28,6 @@ export function useKnownFiles<T = AvailableResponse>(
   });
 }
 
-// interface Row {
-//   id: string;
-//   iteration: number;
-//   rule: string;
-//   when: string;
-//   name: string;
-//   value: string;
-// }
-
 export interface DownloadResponse {
   path: string;
   headers: string[];
@@ -73,7 +64,6 @@ export function useTables<
     ),
   );
   const serverConfig = useContext(ServerConfigContext);
-  console.log(serverConfig);
   return useQueries({
     queries: fileIds
       ? fileIds.map((id) => {

@@ -5,8 +5,9 @@ import usePersistState, { createIDBPersister } from "./usePersistState";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { Sidebar } from "./Sidebar";
 import { useMemo } from "react";
-import { ChartControls, ChartOptions } from "./ChartControls";
+import { ChartControls } from "./ChartControls";
 import * as d3 from "d3";
+import { ChartOptionsProvider } from "./ChartOptions";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,10 +27,10 @@ function Home() {
     (str) => new Set(JSON.parse(str)),
   );
 
-  const [ctrls, setCtrls] = usePersistState<ChartOptions>(
-    new ChartOptions(),
-    "chart-options",
-  );
+  // const [ctrls, setCtrls] = usePersistState<ChartOptions>(
+  //   new ChartOptions(),
+  //   "chart-options",
+  // );
 
   const [open, setOpen] = usePersistState<boolean>(true, "app-sidebar-state");
 
@@ -48,8 +49,8 @@ function Home() {
     <Chart
       selected={selected}
       marginLeft={open ? 340 : 130}
-      ctrls={ctrls}
-      setCtrls={setCtrls}
+      // ctrls={ctrls}
+      // setCtrls={setCtrls}
       selectedRules={selectedRules}
       colors={colors}
     />
@@ -79,7 +80,7 @@ function Home() {
             />
           </div>
           <div>
-            <ChartControls ctrls={ctrls} setCtrls={setCtrls} open={open} />
+            <ChartControls open={open} />
           </div>
         </Sidebar>
         <div className="h-screen w-screen fixed">{renderedChart}</div>
@@ -99,9 +100,11 @@ export default function App() {
         //   <Home />
         // </PersistQueryClientProvider>
       }
-      <QueryClientProvider client={queryClient}>
-        <Home />
-      </QueryClientProvider>
+      <ChartOptionsProvider>
+        <QueryClientProvider client={queryClient}>
+          <Home />
+        </QueryClientProvider>
+      </ChartOptionsProvider>
     </>
   );
 }

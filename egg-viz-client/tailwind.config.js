@@ -62,6 +62,11 @@ module.exports = {
         },
       },
     },
+    fontFamily: {
+      sans: ['"Plus Jakarta Sans"'],
+      mono: ['"JetBrains Mono"'],
+    },
   },
+  darkMode: "selector",
   plugins: [],
 };
