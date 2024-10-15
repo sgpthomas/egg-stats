@@ -5,12 +5,15 @@ mod watcher;
 mod webfiles;
 
 use anyhow::anyhow;
+use itertools::Itertools;
 use std::{
     collections::{HashMap, HashSet},
     convert::Infallible,
     ffi::OsStr,
+    fs,
     path::{Path, PathBuf},
     sync::{Arc, RwLock},
+    time::SystemTime,
 };
 
 use handlers::{available, download, ws};
@@ -56,7 +59,7 @@ impl KnownFiles {
         let mut paths = self.paths.write().map_err(|e| anyhow!("{e}"))?;
 
         // find all csv paths under `&self.root`
-        let csv_paths: HashSet<_> = WalkDir::new(&*self.root)
+        let csv_paths: Vec<(PathBuf, SystemTime)> = WalkDir::new(&*self.root)
             .into_iter()
             .flatten()
             .filter(|entry| entry.file_type().is_file())
@@ -68,16 +71,26 @@ impl KnownFiles {
                     .any(|excl| entry.path().ends_with(excl))
             })
             .map(|entry| entry.into_path())
-            .flat_map(|path| path.strip_prefix(&*self.root).map(|p| p.to_path_buf()))
+            .map(|path| {
+                let metadata = fs::metadata(&path)
+                    .and_then(|metadata| metadata.modified())
+                    .inspect(|time| println!("{path:?} {time:?}"))
+                    .unwrap();
+                (path, metadata)
+            })
+            .flat_map(|(path, ts)| {
+                path.strip_prefix(&*self.root)
+                    .map(|p| (p.to_path_buf(), ts))
+            })
             .collect();
 
         // check all the paths that we know, updating whether they are present
         for (path, (present, _id)) in paths.iter_mut() {
-            *present = csv_paths.contains(path);
+            *present = csv_paths.iter().any(|(p, _ts)| path == p);
         }
 
         // add all new files
-        for csv_path in csv_paths {
+        for (csv_path, _ts) in csv_paths.into_iter().sorted_by_key(|(_, ts)| *ts) {
             paths.entry(csv_path).or_insert_with(|| {
                 let res = (true, *counter);
                 *counter += 1;
