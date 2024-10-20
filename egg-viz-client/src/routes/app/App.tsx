@@ -44,7 +44,7 @@ function Home() {
     (str) => new Map(JSON.parse(str)),
   );
 
-  const colors = useMemo(() => d3.schemeSet2, []);
+  const colors = useMemo(() => [...d3.schemeSet2, ...d3.schemeSet2], []);
 
   const renderedChart = (
     <Chart
