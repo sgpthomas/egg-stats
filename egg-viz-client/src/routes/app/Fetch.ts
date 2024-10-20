@@ -23,7 +23,9 @@ export function useKnownFiles<T = AvailableResponse>(
   return useQuery({
     queryKey: ["knownFiles"],
     queryFn: async () => await fetchAvailable(serverConfig?.port ?? "8080"),
-    retry: 3,
+    retry: 2,
+    staleTime: 1,
+    refetchInterval: 30 * 1000, // 30 secs
     select,
   });
 }

@@ -17,6 +17,7 @@ import { PiWaveSineBold } from "react-icons/pi";
 import { IoRemoveOutline } from "react-icons/io5";
 import { HoverTooltip } from "./hooks";
 import { ServerConfigContext } from "../../ServerContext";
+import { queryClient } from "./App";
 
 function CollapseDiv({
   expanded,
@@ -55,9 +56,13 @@ function darkenColor(color?: string, amount = 1.3): string | undefined {
 function FileItemLoaded({
   table,
   onRule,
+  enabled,
+  fetching = false,
 }: {
   table: PivotTable;
   onRule: (rule: string | null) => void;
+  enabled: boolean;
+  fetching?: boolean;
 }) {
   // TODO move this into pivot table
   const ruleList: ASet<[string, string]> = useMemo(() => {
@@ -97,7 +102,7 @@ function FileItemLoaded({
 
   return (
     <div
-      className="mt-1 space-y-1"
+      className={`space-y-1 transition-opacity ${!enabled && "opacity-50"}`}
       onKeyDown={(e) => {
         if (!selRule) return;
         if (e.key === "ArrowUp") {
@@ -115,6 +120,34 @@ function FileItemLoaded({
         });
       }}
     >
+      {!fetching && (
+        <button
+          className={[
+            "font-bold text-black dark:text-white",
+            "bg-egg-400 dark:bg-mixed-60",
+            enabled && "hover:bg-egg-500",
+            "rounded-md",
+            "px-2",
+            "select-none",
+            "group",
+            "flex w-full justify-center",
+          ].join(" ")}
+          onClick={(e) => {
+            if (!enabled) return;
+            e.stopPropagation();
+            queryClient.invalidateQueries({
+              queryKey: ["download", table.file_id],
+            });
+          }}
+        >
+          <div className="flex flex-row items-center gap-x-1">
+            <fa6.FaArrowRotateRight
+              className={enabled ? "group-hover:animate-spin-bobble" : ""}
+            />
+            Refresh
+          </div>
+        </button>
+      )}
       {table && (
         <>
           <div className="font-bold dark:text-white">Value names:</div>
@@ -176,6 +209,7 @@ function FileItemLoaded({
                     ].join(" ")}
                     key={idx}
                     onClick={(e) => {
+                      if (!enabled) return;
                       if (selRule === idx) {
                         setSelRul(null);
                       } else {
@@ -338,14 +372,21 @@ function FileItem({
               ) : undefined}
             </div>
             <CollapseDiv expanded={exp} open={open}>
-              {table && table.data ? (
-                <FileItemLoaded table={table.data} onRule={onRule} />
-              ) : (
-                <div className="p-1 mt-2 bg-egg-400 dark:bg-mixed-40 rounded-md flex space-x-1 items-center animate-subtle-pulse justify-center">
-                  <span className="text-sm text-center font-bold truncate grow">
+              <div className="mt-1"></div>
+              {table?.isFetching && (
+                <div className="bg-egg-400 dark:bg-mixed-60 rounded-md flex items-center animate-subtle-pulse justify-center mb-1">
+                  <span className="text-center font-bold truncate grow text-black dark:text-white select-none">
                     Downloading
                   </span>
                 </div>
+              )}
+              {table && table.data && (
+                <FileItemLoaded
+                  table={table.data}
+                  onRule={onRule}
+                  enabled={selected.has(id)}
+                  fetching={table.isFetching}
+                />
               )}
             </CollapseDiv>
           </div>
