@@ -74,7 +74,6 @@ impl KnownFiles {
             .map(|path| {
                 let metadata = fs::metadata(&path)
                     .and_then(|metadata| metadata.modified())
-                    .inspect(|time| println!("{path:?} {time:?}"))
                     .unwrap();
                 (path, metadata)
             })

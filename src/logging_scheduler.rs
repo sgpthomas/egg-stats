@@ -21,6 +21,25 @@ pub fn write_headers(path: impl AsRef<Path>) {
     writeln!(&mut file, "id,iteration,rule_name,rule,when,name,value").unwrap()
 }
 
+pub fn manual_row(
+    identifier: impl std::fmt::Display,
+    path: impl AsRef<Path>,
+    iteration: usize,
+    name: impl std::fmt::Display,
+    name_info: impl std::fmt::Display,
+    typ: &str,
+    id: impl std::fmt::Display,
+    datum: impl std::fmt::Display,
+) {
+    let mut file = OpenOptions::new().append(true).open(path).unwrap();
+    writeln!(
+        &mut file,
+        "{},{},{},{},{},{},{}",
+        identifier, iteration, name, name_info, typ, id, datum
+    )
+    .unwrap();
+}
+
 impl<'a, S, L, N> LoggingScheduler<'a, S, L, N> {
     pub fn new(scheduler: S) -> Self {
         LoggingScheduler {
