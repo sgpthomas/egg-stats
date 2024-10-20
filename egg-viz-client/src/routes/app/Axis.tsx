@@ -3,6 +3,10 @@ import { useMemo } from "react";
 function AxisTickLabel({ value }: { value: number }) {
   if (value < 10) return <tspan>{value}</tspan>;
 
+  if (value.toString().length <= 4) {
+    return <tspan>{value}</tspan>;
+  }
+
   if (Math.log10(value) % 1 === 0) {
     const exp = Math.log10(value);
 
@@ -12,9 +16,17 @@ function AxisTickLabel({ value }: { value: number }) {
         <tspan baselineShift="super">{exp}</tspan>
       </>
     );
+  } else {
+    const exponential = value.toExponential();
+    const [pre, exp] = exponential.split("e");
+    const normExp = exp?.startsWith("+") ? exp.substring(1) : exp;
+    return (
+      <>
+        <tspan>{pre}×10</tspan>
+        <tspan baselineShift="super">{normExp}</tspan>
+      </>
+    );
   }
-
-  return <tspan>{value.toExponential()}</tspan>;
 }
 
 export type d3Scale =
