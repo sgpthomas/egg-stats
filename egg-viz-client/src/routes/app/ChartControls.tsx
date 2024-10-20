@@ -11,6 +11,8 @@ import {
   PropsWithChildren,
   useCallback,
   useContext,
+  useEffect,
+  useRef,
   useState,
 } from "react";
 import { useTables } from "./Fetch";
@@ -79,15 +81,36 @@ function ButtonGroup<T>({
   );
 }
 
+export function roundUpperBound(input: number): number {
+  const nZeros = Math.floor(Math.log10(input));
+  if (nZeros === 0) {
+    return 10;
+  }
+
+  return (Math.floor(input / Math.pow(10, nZeros)) + 1) * Math.pow(10, nZeros);
+}
+
+export function lowerBound(typ: "linear" | "log", value: number): number {
+  if (typ === "linear") {
+    return Math.max(0, value);
+  } else if (typ === "log") {
+    return Math.max(1, value);
+  } else {
+    return Math.max(0, value);
+  }
+}
+
 function RangeSelect({
   label,
   range,
   computed,
+  locked,
   onChange = (_) => {},
 }: {
   label: string;
   range: [number?, number?];
   computed: [number, number];
+  locked: boolean;
   onChange?: (r: [number?, number?]) => void;
 }) {
   const inputClasses = [
@@ -100,31 +123,68 @@ function RangeSelect({
     "text-md",
     "appearance-none",
   ];
+
+  const lower = roundUpperBound(range[0] ?? computed[0]);
+  const lowerRef = useRef<HTMLInputElement | null>(null);
+
+  const upper = roundUpperBound(range[1] ?? computed[1]);
+  const upperRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (lowerRef.current && upperRef.current) {
+      lowerRef.current.value = lower.toExponential();
+      upperRef.current.value = upper.toExponential();
+    }
+  }, [locked]);
+
+  const onEvent = () => {
+    const lowerVal = Number(lowerRef.current?.value);
+    const upperVal = Number(upperRef.current?.value);
+    if (
+      lowerRef.current &&
+      (isNaN(lowerVal) || lowerRef.current?.value === "")
+    ) {
+      lowerRef.current.value = `${lower.toExponential()}`;
+    }
+    if (
+      upperRef.current &&
+      (isNaN(upperVal) || upperRef.current?.value === "")
+    ) {
+      upperRef.current.value = `${upper.toExponential()}`;
+    }
+    onChange([
+      isNaN(lowerVal) ? computed[0] : lowerVal,
+      isNaN(upperVal) ? computed[1] : upperVal,
+    ]);
+  };
+
   return (
     <span className="space-x-1 text-md flex items-center">
       <input
-        value={range[0] ?? computed[0]}
-        type="number"
+        ref={lowerRef}
+        defaultValue={lower.toExponential()}
         className={inputClasses.concat(["text-end"]).join(" ")}
-        onChange={(e) => {
-          onChange([
-            e.target.value === "" ? computed[0] : e.target.valueAsNumber,
-            range[1],
-          ]);
+        disabled={!locked}
+        onBlur={(_) => onEvent()}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            onEvent();
+          }
         }}
       />
       <span className="text-black dark:text-white">&le; {label} &le;</span>
       <input
-        value={range[1] ?? computed[1]}
-        type="number"
+        ref={upperRef}
+        defaultValue={upper.toExponential()}
         className={inputClasses.concat(["text-start"]).join(" ")}
-        onChange={(e) => {
-          onChange([
-            range[0],
-            e.target.value === "" ? computed[1] : e.target.valueAsNumber,
-          ]);
+        disabled={!locked}
+        onBlur={(_) => onEvent()}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            onEvent();
+          }
         }}
-      />
+      ></input>
     </span>
   );
 }
@@ -342,6 +402,7 @@ function ChartControlScale({}: ChartControlProps) {
           range={ctrls.userRange.x}
           computed={ctrls.computedRange.x}
           label="x"
+          locked={ctrls.locked}
           onChange={(v) => {
             ctrls.userRange.x = v;
             setCtrls(new ChartOptions(ctrls));
@@ -359,6 +420,7 @@ function ChartControlScale({}: ChartControlProps) {
           range={ctrls.userRange.y}
           computed={ctrls.computedRange.y}
           label="y"
+          locked={ctrls.locked}
           onChange={(v) => {
             ctrls.userRange.y = v;
             setCtrls(new ChartOptions(ctrls));

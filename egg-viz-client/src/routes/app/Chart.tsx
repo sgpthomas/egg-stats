@@ -27,6 +27,7 @@ import {
   ChartOptionsContext,
   ChartOptions,
 } from "./ChartOptions";
+import { lowerBound, roundUpperBound } from "./ChartControls";
 
 export interface Point<T = number> {
   x: T;
@@ -39,15 +40,6 @@ interface DataPoint {
   id: number;
 }
 
-function scaleBound(input: number): number {
-  const nZeros = Math.floor(Math.log10(input));
-  if (nZeros === 0) {
-    return 10;
-  }
-
-  return (Math.floor(input / Math.pow(10, nZeros)) + 1) * Math.pow(10, nZeros);
-}
-
 function toD3Scale(typ: "linear" | "log", domain: [number, number]) {
   if (typ === "linear") {
     return d3.scaleLinear().domain(domain);
@@ -55,16 +47,6 @@ function toD3Scale(typ: "linear" | "log", domain: [number, number]) {
     return d3.scaleLog().domain(domain);
   } else {
     return d3.scaleLinear().domain(domain);
-  }
-}
-
-function lowerBound(typ: "linear" | "log"): number {
-  if (typ === "linear") {
-    return 0;
-  } else if (typ === "log") {
-    return 1;
-  } else {
-    return 0;
   }
 }
 
@@ -418,44 +400,73 @@ export function Chart({
 
   const [ref, dms] = useChartDimensions(chartSettings);
 
-  const [maxX, maxY]: [number, number] = useTables({
+  const [min, max]: [Point<number>, Point<number>] = useTables({
     select: useCallback(
       (table: PivotTable) => {
-        if (!selected.has(table.file_id)) return [1, 1];
+        if (!selected.has(table.file_id))
+          return [
+            { x: 1, y: 1 },
+            { x: 1, y: 1 },
+          ];
         const line = points(table, ctrls.columns.x, ctrls.columns.y);
-        return [d3.max(line, (d) => d.pt.x), d3.max(line, (d) => d.pt.y)];
+        return [
+          {
+            x: d3.min(line, (d) => d.pt.x),
+            y: d3.min(line, (d) => d.pt.y),
+          },
+          {
+            x: d3.max(line, (d) => d.pt.x),
+            y: d3.max(line, (d) => d.pt.y),
+          },
+        ] as [Point<number>, Point<number>];
       },
       [ctrls.columns.x, ctrls.columns.y, selected],
     ),
     combine: (queries) => {
-      const maxes = queries.filter((q) => !!q.data).map((q) => q.data);
+      const ranges = queries.filter((q) => !!q.data).map((q) => q.data);
       return [
-        d3.max(maxes, (m) => m[0]) ?? 100,
-        d3.max(maxes, (m) => m[1]) ?? 100,
+        {
+          x: d3.min(ranges, (m) => m[0]?.x) ?? 0,
+          y: d3.min(ranges, (m) => m[0]?.y) ?? 0,
+        },
+        {
+          x: d3.max(ranges, (m) => m[1]?.x) ?? 100,
+          y: d3.max(ranges, (m) => m[1]?.y) ?? 100,
+        },
       ];
     },
   });
 
   useEffect(() => {
-    ctrls.computedRange.x[1] = scaleBound(maxX);
-    ctrls.computedRange.y[1] = scaleBound(maxY);
+    ctrls.computedRange.x = [min.x, max.x];
+    ctrls.computedRange.y = [min.y, max.y];
     setCtrls(new ChartOptions(ctrls));
-  }, [maxX, maxY]);
+  }, [min, max]);
 
   const xScale = useMemo(() => {
     return toD3Scale(ctrls.scaleType.x, [
-      lowerBound(ctrls.scaleType.x),
-      scaleBound(ChartOptions.range(ctrls).x[1]),
+      lowerBound(ctrls.scaleType.x, ChartOptions.range(ctrls).x[0]),
+      roundUpperBound(ChartOptions.range(ctrls).x[1]),
     ]).range([0, dms.boundedWidth]);
-  }, [dms.boundedWidth, ctrls.scaleType.x, ChartOptions.range(ctrls).x[1]]);
+  }, [
+    dms.boundedWidth,
+    ctrls.scaleType.x,
+    ChartOptions.range(ctrls).x[0],
+    ChartOptions.range(ctrls).x[1],
+  ]);
 
   const yScale = useMemo(
     () =>
       toD3Scale(ctrls.scaleType.y, [
-        scaleBound(ChartOptions.range(ctrls).y[1]),
-        lowerBound(ctrls.scaleType.y),
+        roundUpperBound(ChartOptions.range(ctrls).y[1]),
+        lowerBound(ctrls.scaleType.y, ChartOptions.range(ctrls).y[0]),
       ]).range([0, dms.boundedHeight]),
-    [dms.boundedHeight, ctrls.scaleType.y, ChartOptions.range(ctrls).y[1]],
+    [
+      dms.boundedHeight,
+      ctrls.scaleType.y,
+      ChartOptions.range(ctrls).y[0],
+      ChartOptions.range(ctrls).y[1],
+    ],
   );
 
   const scales = useMemo(
@@ -467,12 +478,6 @@ export function Chart({
   );
 
   const tooltip = usePointTooltip();
-
-  // const [isDark, mode, _] = useDarkMode();
-  // console.log(mode);
-  // useEffect(() => {
-  //   console.log("dark changed");
-  // }, [mode]);
 
   return (
     <div ref={ref} className="h-screen bg-egg dark:bg-mixed-20">
