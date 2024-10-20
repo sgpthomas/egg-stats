@@ -140,6 +140,7 @@ function DataPointSvg({
       fill={fill}
       stroke={!highlight || selected ? "#5d524c" : "none"}
       strokeWidth={0.75}
+      strokeOpacity={0.2}
       opacity={opacity}
       onMouseOver={(e) => {
         setRad(lgR);
@@ -229,6 +230,8 @@ const Points = memo(function Points({
   const rendered = useDeferredRender<[number, ReactElement, ReactElement][]>(
     () =>
       query.map(([file_id, data]) => {
+        if (!selected.has(file_id))
+          return [file_id, <tspan></tspan>, <tspan></tspan>];
         const el = (
           <g key={`point-group-${file_id}`}>
             {data.map((d, ptidx) => (
@@ -256,7 +259,7 @@ const Points = memo(function Points({
         return [file_id, el, dimEl] as [number, ReactElement, ReactElement];
       }),
     [],
-    [scales.x, scales.y, columns.x, columns.y, colors, query],
+    [query, scales.x, scales.y, columns.x, columns.y, colors],
   );
 
   const highlightedRender = highlightedPoints.map(([file_id, data]) => {
@@ -352,6 +355,7 @@ const Lines = memo(function Lines({
   const lines = useDeferredRender(
     () =>
       query.map(([id, data, filtered]) => {
+        if (!selected.has(id)) return [];
         return [
           id,
           <path

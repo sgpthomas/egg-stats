@@ -9,6 +9,7 @@ module.exports = {
       },
       animation: {
         "spin-slow": "spin 2s linear infinite",
+        "spin-bobble": "bobble 0.75s ease-in-out 1",
         "subtle-pulse":
           "subtlepulse 1.75s cubic-bezier(0.4, 0, 0.6, 1) infinite",
       },
@@ -16,6 +17,10 @@ module.exports = {
         subtlepulse: {
           "0%, 100%": { opacity: 1 },
           "50%": { opacity: 0.65 },
+        },
+        bobble: {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" },
         },
       },
       colors: {
