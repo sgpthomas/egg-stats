@@ -317,14 +317,17 @@ function ChartControlColumns({}: ChartControlProps) {
 
   const columnValues = useTables({
     select: useCallback((table: PivotTable) => table.value_names, []),
-    combine: (queries: UseQueryResult<string[]>[]) =>
-      queries
-        ?.filter((t) => !!t.data)
-        .map((t) => t.data)
-        .reduce<string[] | undefined>(
-          (a, b) => setIntersect(a, b),
-          undefined,
-        ) ?? [],
+    combine: useCallback(
+      (queries: UseQueryResult<string[]>[]) =>
+        queries
+          ?.filter((t) => !!t.data)
+          .map((t) => t.data)
+          .reduce<string[] | undefined>(
+            (a, b) => setIntersect(a, b),
+            undefined,
+          ) ?? [],
+      [],
+    ),
   });
 
   return (

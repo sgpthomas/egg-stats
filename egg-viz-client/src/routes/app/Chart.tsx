@@ -28,6 +28,7 @@ import {
   ChartOptions,
 } from "./ChartOptions";
 import { lowerBound, roundUpperBound } from "./ChartControls";
+import { UseQueryResult } from "@tanstack/react-query";
 
 export interface Point<T = number> {
   x: T;
@@ -159,7 +160,11 @@ const Points = memo(function Points({
       },
       [columns.x, columns.y, scales.x, scales.y],
     ),
-    combine: (results) => results.filter((q) => !!q.data).map((q) => q.data),
+    combine: useCallback(
+      (results: UseQueryResult<[number, DataPoint[]]>[]) =>
+        results.filter((q) => !!q.data).map((q) => q.data),
+      [],
+    ),
   });
 
   const highlightedPoints: [number, DataPoint[]][] = useMemo(
@@ -213,7 +218,11 @@ const Points = memo(function Points({
     () =>
       query.map(([file_id, data]) => {
         if (!selected.has(file_id))
-          return [file_id, <tspan></tspan>, <tspan></tspan>];
+          return [
+            file_id,
+            <tspan key={`${file_id}-blank`}></tspan>,
+            <tspan key={`${file_id}-blank2`}></tspan>,
+          ];
         const el = (
           <g key={`point-group-${file_id}`}>
             {data.map((d, ptidx) => (
@@ -329,9 +338,11 @@ const Lines = memo(function Lines({
       },
       [columns.x, columns.y],
     ),
-    combine: (results) => {
-      return results.filter((q) => !!q.data).map((q) => q.data);
-    },
+    combine: useCallback(
+      (results: UseQueryResult<[number, DataPoint[], DataPoint[]]>[]) =>
+        results.filter((q) => !!q.data).map((q) => q.data),
+      [],
+    ),
   });
 
   const lines = useDeferredRender(
@@ -407,7 +418,7 @@ export function Chart({
           return [
             { x: 1, y: 1 },
             { x: 1, y: 1 },
-          ];
+          ] as [Point<number>, Point<number>];
         const line = points(table, ctrls.columns.x, ctrls.columns.y);
         return [
           {
@@ -422,19 +433,22 @@ export function Chart({
       },
       [ctrls.columns.x, ctrls.columns.y, selected],
     ),
-    combine: (queries) => {
-      const ranges = queries.filter((q) => !!q.data).map((q) => q.data);
-      return [
-        {
-          x: d3.min(ranges, (m) => m[0]?.x) ?? 0,
-          y: d3.min(ranges, (m) => m[0]?.y) ?? 0,
-        },
-        {
-          x: d3.max(ranges, (m) => m[1]?.x) ?? 100,
-          y: d3.max(ranges, (m) => m[1]?.y) ?? 100,
-        },
-      ];
-    },
+    combine: useCallback(
+      (queries: UseQueryResult<[Point<number>, Point<number>]>[]) => {
+        const ranges = queries.filter((q) => !!q.data).map((q) => q.data);
+        return [
+          {
+            x: d3.min(ranges, (m) => m[0]?.x) ?? 0,
+            y: d3.min(ranges, (m) => m[0]?.y) ?? 0,
+          },
+          {
+            x: d3.max(ranges, (m) => m[1]?.x) ?? 100,
+            y: d3.max(ranges, (m) => m[1]?.y) ?? 100,
+          },
+        ];
+      },
+      [],
+    ),
   });
 
   useEffect(() => {
@@ -534,7 +548,6 @@ export function Chart({
               drawLine={ctrls.drawLine}
             />
           }
-
           <Points
             columns={ctrls.columns}
             scales={scales}
