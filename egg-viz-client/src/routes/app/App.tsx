@@ -4,11 +4,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import usePersistState, { createIDBPersister } from "./usePersistState";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { Sidebar } from "./Sidebar";
-import { useMemo } from "react";
+import { useContext } from "react";
 import { ChartControls } from "./ChartControls";
-import * as d3 from "d3";
 import { ChartOptionsProvider } from "./ChartOptions";
 import * as palette from "google-palette";
+import { ServerConfigContext } from "../../ServerContext";
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -81,21 +81,20 @@ function Home() {
 }
 
 export default function App() {
+  const serverConfig = useContext(ServerConfigContext);
   return (
-    <>
+    <ChartOptionsProvider>
       {
-        // <PersistQueryClientProvider
-        //   client={queryClient}
-        //   persistOptions={{ persister, buster: "e" }}
-        // >
-        //   <Home />
-        // </PersistQueryClientProvider>
-      }
-      <ChartOptionsProvider>
-        <QueryClientProvider client={queryClient}>
+        <PersistQueryClientProvider
+          client={queryClient}
+          persistOptions={{ persister, buster: serverConfig?.buster }}
+        >
           <Home />
-        </QueryClientProvider>
-      </ChartOptionsProvider>
-    </>
+        </PersistQueryClientProvider>
+        // <QueryClientProvider client={queryClient}>
+        //   <Home />
+        // </QueryClientProvider>
+      }
+    </ChartOptionsProvider>
   );
 }

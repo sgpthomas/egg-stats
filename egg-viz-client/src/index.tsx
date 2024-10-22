@@ -12,7 +12,7 @@ const router = createBrowserRouter([
     element: <App />,
   },
   {
-    path: "/reset/:port",
+    path: "/reset/:port/:buster?",
     element: <Reset />,
   },
 ]);

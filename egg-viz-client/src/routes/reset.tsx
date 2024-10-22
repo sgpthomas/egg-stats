@@ -7,7 +7,8 @@ export default function Reset() {
 
   const params = useParams();
   const dispatch = useContext(ServerConfigDispatchContext);
-  if (dispatch !== undefined) dispatch(params.port);
+  if (dispatch !== undefined)
+    dispatch({ port: params.port, buster: params.buster });
 
   return <Navigate to="/" replace={true} />;
 }

@@ -2,13 +2,14 @@ import { createContext, Dispatch, PropsWithChildren, useReducer } from "react";
 
 interface ServerConfig {
   port?: string;
+  buster: string;
 }
 
 export const ServerConfigContext = createContext<ServerConfig | undefined>(
   undefined,
 );
 export const ServerConfigDispatchContext = createContext<
-  Dispatch<string | undefined> | undefined
+  Dispatch<UpdateConfigAction> | undefined
 >(undefined);
 
 export function ServerConfigProvider({ children }: PropsWithChildren<{}>) {
@@ -18,7 +19,7 @@ export function ServerConfigProvider({ children }: PropsWithChildren<{}>) {
     loadedConfig = JSON.parse(savedContext);
   }
 
-  const [config, dispatch] = useReducer(portReducer, loadedConfig);
+  const [config, dispatch] = useReducer(configReducer, loadedConfig);
 
   return (
     <ServerConfigContext.Provider value={config}>
@@ -29,13 +30,23 @@ export function ServerConfigProvider({ children }: PropsWithChildren<{}>) {
   );
 }
 
-function portReducer(config: ServerConfig, port?: string): ServerConfig {
+export interface UpdateConfigAction {
+  port?: string;
+  buster?: string;
+}
+
+function configReducer(
+  config: ServerConfig,
+  action?: UpdateConfigAction,
+): ServerConfig {
   const newConfig = {
-    ...config,
-    port: port,
+    port: action?.port,
+    buster: action?.buster ?? window.crypto.randomUUID(),
   };
   localStorage.setItem("server-context", JSON.stringify(newConfig));
   return newConfig;
 }
 
-const initialConfig: ServerConfig = {};
+const initialConfig: ServerConfig = {
+  buster: "",
+};
