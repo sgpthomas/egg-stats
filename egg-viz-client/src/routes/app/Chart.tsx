@@ -158,12 +158,13 @@ const Points = memo(function Points({
         const data = points(table, columns.x, columns.y);
         return [table.file_id, data] as [number, DataPoint[]];
       },
-      [columns.x, columns.y, scales.x, scales.y],
+      [columns.x, columns.y],
     ),
     combine: useCallback(
-      (results: UseQueryResult<[number, DataPoint[]]>[]) =>
-        results.filter((q) => !!q.data).map((q) => q.data),
-      [],
+      (results: UseQueryResult<[number, DataPoint[]]>[]) => {
+        return results.filter((q) => !!q.data).map((q) => q.data);
+      },
+      [columns.x, columns.y], // TODO: seems like I shouldn't need this here. I expect it to change on data update. but it isn't
     ),
   });
 
@@ -250,7 +251,7 @@ const Points = memo(function Points({
         return [file_id, el, dimEl] as [number, ReactElement, ReactElement];
       }),
     [],
-    [query, scales.x, scales.y, columns.x, columns.y, colors],
+    [query, scales.x, scales.y, colors, selected],
   );
 
   const highlightedRender = highlightedPoints.map(([file_id, data]) => {
@@ -340,7 +341,7 @@ const Lines = memo(function Lines({
     combine: useCallback(
       (results: UseQueryResult<[number, DataPoint[], DataPoint[]]>[]) =>
         results.filter((q) => !!q.data).map((q) => q.data),
-      [],
+      [columns.x, columns.y],
     ),
   });
 
@@ -374,6 +375,7 @@ const Lines = memo(function Lines({
       columns.y,
       line,
       highlightLine,
+      query,
     ],
   );
 
@@ -430,22 +432,19 @@ export function Chart({
       },
       [ctrls.columns.x, ctrls.columns.y, selected],
     ),
-    combine: useCallback(
-      (queries: UseQueryResult<[Point<number>, Point<number>]>[]) => {
-        const ranges = queries.filter((q) => !!q.data).map((q) => q.data);
-        return [
-          {
-            x: d3.min(ranges, (m) => m[0]?.x) ?? 0,
-            y: d3.min(ranges, (m) => m[0]?.y) ?? 0,
-          },
-          {
-            x: d3.max(ranges, (m) => m[1]?.x) ?? 100,
-            y: d3.max(ranges, (m) => m[1]?.y) ?? 100,
-          },
-        ];
-      },
-      [],
-    ),
+    combine: (queries: UseQueryResult<[Point<number>, Point<number>]>[]) => {
+      const ranges = queries.filter((q) => !!q.data).map((q) => q.data);
+      return [
+        {
+          x: d3.min(ranges, (m) => m[0]?.x) ?? 0,
+          y: d3.min(ranges, (m) => m[0]?.y) ?? 0,
+        },
+        {
+          x: d3.max(ranges, (m) => m[1]?.x) ?? 100,
+          y: d3.max(ranges, (m) => m[1]?.y) ?? 100,
+        },
+      ] as [Point<number>, Point<number>];
+    },
   });
 
   useEffect(() => {
