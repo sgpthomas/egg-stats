@@ -586,11 +586,6 @@ export function ChartControls(props: ChartControlProps) {
               "border-[1px]",
               "rounded-md",
               "drop-shadow-md",
-              // "transition-opacity",
-              // "transition-transform",
-              // settingsOpen && "animate-slide-down",
-              // !settingsOpen && "pointer-events-none",
-              // settingsOpen ? "opacity-100" : "opacity-0",
             ].join(" ")}
             ref={refs.setFloating}
             style={{

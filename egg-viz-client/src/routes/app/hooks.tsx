@@ -13,7 +13,6 @@ import {
   Children,
   cloneElement,
   forwardRef,
-  isValidElement,
   PropsWithChildren,
   ReactElement,
   startTransition,
@@ -21,7 +20,6 @@ import {
   useEffect,
   useState,
 } from "react";
-import usePersistState from "./usePersistState";
 
 export function timeFn<T>(fn: () => T, label?: string): T {
   const start = performance.now();
@@ -115,7 +113,7 @@ export const HoverTooltip = forwardRef(function HoverTooltip(
           </div>
         </FloatingPortal>
       )}
-      {cloneElement(onlyChild, {
+      {cloneElement(onlyChild as any, {
         ref: refs.setReference,
         ...getReferenceProps(),
       })}

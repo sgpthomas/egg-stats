@@ -1,13 +1,12 @@
 import { Chart } from "./Chart";
 import { FileList } from "./FileList";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
 import usePersistState, { createIDBPersister } from "./usePersistState";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { Sidebar } from "./Sidebar";
 import { useContext } from "react";
 import { ChartControls } from "./ChartControls";
 import { ChartOptionsProvider } from "./ChartOptions";
-import * as palette from "google-palette";
 import { ServerConfigContext } from "../../ServerContext";
 
 export const queryClient = new QueryClient({
@@ -91,9 +90,6 @@ export default function App() {
         >
           <Home />
         </PersistQueryClientProvider>
-        // <QueryClientProvider client={queryClient}>
-        //   <Home />
-        // </QueryClientProvider>
       }
     </ChartOptionsProvider>
   );
