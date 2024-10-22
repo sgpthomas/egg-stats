@@ -2,6 +2,7 @@ import {
   autoPlacement,
   autoUpdate,
   FloatingPortal,
+  offset,
   shift,
   useFloating,
   UseFloatingOptions,
@@ -10,6 +11,9 @@ import {
 } from "@floating-ui/react";
 import {
   Children,
+  cloneElement,
+  forwardRef,
+  isValidElement,
   PropsWithChildren,
   ReactElement,
   startTransition,
@@ -56,59 +60,26 @@ export function useMediaQuery(query: string) {
   return matches;
 }
 
-// export function useDarkMode(): [
-//   boolean,
-//   DarkModeOpts,
-//   (v: DarkModeOpts) => void,
-// ] {
-//   const [darkMode, setDarkMode] = usePersistState<DarkModeOpts>(
-//     "system",
-//     "dark-mode",
-//   );
-//   const systemDark = useMediaQuery("(prefers-color-scheme: dark)");
-
-//   useEffect(() => {
-//     switch (darkMode) {
-//       case "system":
-//         if (systemDark) {
-//           document.documentElement.classList.add("dark");
-//         } else {
-//           document.documentElement.classList.remove("dark");
-//         }
-//         return;
-//       case "light":
-//         document.documentElement.classList.remove("dark");
-//         return;
-//       case "dark":
-//         document.documentElement.classList.add("dark");
-//         return;
-//     }
-//   }, [darkMode, systemDark]);
-
-//   useEffect(() => {
-//     console.log("mode changed...");
-//   }, [darkMode]);
-
-//   const isDark = darkMode === "system" ? systemDark : darkMode === "dark";
-
-//   return [isDark, darkMode, setDarkMode];
-// }
-
-export function HoverTooltip({
-  children,
-  content,
-  enabled = true,
-  floating = {
-    placement: "top",
-    middleware: [autoPlacement(), shift()],
-    transform: true,
-    whileElementsMounted: autoUpdate,
-  },
-}: PropsWithChildren<{
-  content: ReactElement | string;
-  enabled?: boolean;
-  floating?: UseFloatingOptions;
-}>) {
+export const HoverTooltip = forwardRef(function HoverTooltip(
+  {
+    children,
+    content,
+    enabled = true,
+    toplevelProps = {},
+    floating = {
+      placement: "top",
+      middleware: [autoPlacement(), shift(), offset(5)],
+      transform: true,
+      whileElementsMounted: autoUpdate,
+    },
+  }: PropsWithChildren<{
+    content: ReactElement | string;
+    enabled?: boolean;
+    toplevelProps?: any;
+    floating?: UseFloatingOptions;
+  }>,
+  forwardRef,
+) {
   const [open, setOpen] = useState(false);
   const { refs, floatingStyles, context } = useFloating({
     ...floating,
@@ -118,10 +89,11 @@ export function HoverTooltip({
   const hover = useHover(context);
   const { getReferenceProps, getFloatingProps } = useInteractions([hover]);
 
-  const innerContent = Children.only(children);
+  // make sure that we are passed only a single child
+  const onlyChild = Children.only(children);
 
   return (
-    <>
+    <div ref={forwardRef} {...toplevelProps}>
       {enabled && open && (
         <FloatingPortal>
           <div
@@ -143,9 +115,10 @@ export function HoverTooltip({
           </div>
         </FloatingPortal>
       )}
-      <div ref={refs.setReference} {...getReferenceProps()}>
-        {innerContent}
-      </div>
-    </>
+      {cloneElement(onlyChild, {
+        ref: refs.setReference,
+        ...getReferenceProps(),
+      })}
+    </div>
   );
-}
+});

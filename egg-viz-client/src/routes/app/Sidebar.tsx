@@ -1,6 +1,5 @@
 import { PropsWithChildren } from "react";
 import usePersistState from "./usePersistState";
-import { motion } from "framer-motion";
 
 export function Sidebar({
   children,
@@ -36,8 +35,8 @@ export function Sidebar({
       >
         <img alt="egg logo" src="egg.svg" className="w-6 h-6" />
       </button>
-      <motion.div
-        style={{ translateX: width }}
+      <div
+        style={{ transform: `translate(${width}, 0)` }}
         className={[
           "min-w-[17.5rem]",
           "z-10",
@@ -46,7 +45,7 @@ export function Sidebar({
           "transition-transform",
         ].join(" ")}
       >
-        <motion.div
+        <div
           className={[
             "h-screen",
             "max-h-screen",
@@ -62,7 +61,7 @@ export function Sidebar({
             "space-y-2",
           ].join(" ")}
         >
-          <motion.div className="flex flex-row mb-2 justify-center">
+          <div className="flex flex-row mb-2 justify-center">
             <h1
               className={[
                 "text-xl",
@@ -76,10 +75,10 @@ export function Sidebar({
             >
               Egg Visualizer
             </h1>
-          </motion.div>
+          </div>
           {children}
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
     </div>
   );
 }

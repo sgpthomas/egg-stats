@@ -1,10 +1,14 @@
 import * as fa6 from "react-icons/fa6";
 import {
+  autoPlacement,
   FloatingPortal,
+  offset,
+  shift,
   useClick,
   useDismiss,
   useFloating,
   useInteractions,
+  useTransitionStyles,
 } from "@floating-ui/react";
 import {
   ChangeEvent,
@@ -283,7 +287,7 @@ function ChartControlItem(props: PropsWithChildren<{}>) {
     <div
       className={[
         "border-[1px]",
-        "border-egg-400 dark:border-mixed-40",
+        "border-egg-400 dark:border-mixed-60",
         "rounded-md",
         "p-2",
         "space-y-[0.5px]",
@@ -512,37 +516,42 @@ export function ChartControls(props: ChartControlProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const { refs, floatingStyles, context } = useFloating({
-    placement: "top-start",
+    placement: "bottom-end",
     open: settingsOpen,
     onOpenChange: setSettingsOpen,
+    middleware: [offset(50)],
   });
 
   const click = useClick(context);
   const dismiss = useDismiss(context);
-
   const { getReferenceProps, getFloatingProps } = useInteractions([
     click,
     dismiss,
   ]);
 
-  return (
-    <div>
-      <div
-        className={[
-          "space-y-1 flex flex-col p-1 rounded-md",
-          "bg-egg-300 dark:bg-mixed-20",
-          "transition-all",
-          props.open ? "opacity-1" : "opacity-0",
-          props.open ? "visible" : "invisible",
-        ].join(" ")}
-      >
-        {body}
-      </div>
+  const { isMounted, styles } = useTransitionStyles(context, {
+    initial: {
+      opacity: 0,
+      translate: "0 -10px",
+    },
+    duration: 100,
+  });
 
-      <HoverTooltip content=<span>Chart Controls</span>>
+  return (
+    <div id="chart-settings">
+      <HoverTooltip
+        content=<span>Chart Controls</span>
+        floating={{
+          placement: "left",
+          middleware: [autoPlacement(), shift(), offset(5)],
+        }}
+        ref={refs.setReference}
+        toplevelProps={getReferenceProps()}
+      >
         <button
           className={[
-            "text-lg align-center p-2 absolute bottom-[14px] right-[14px] rounded-md",
+            "text-lg align-center p-2 rounded-md",
+            "fixed top-2 right-2 z-[60]",
             "transition-all",
             "disabled:pointer-events-none",
             "opacity-1",
@@ -550,37 +559,44 @@ export function ChartControls(props: ChartControlProps) {
             "visible",
             "disable:invisible",
             "hover:bg-egg-400 hover:dark:bg-mixed-60",
-            "bg-egg-300 dark:bg-mixed-20",
+            "drop-shadow-lg",
+            "bg-egg-300 dark:bg-mixed-40",
             "text-black dark:text-white",
             "focus:outline-none",
             "focus:ring-[2px]",
             "ring-egg-700",
+            "group",
           ].join(" ")}
-          disabled={props.open}
-          ref={refs.setReference}
-          {...getReferenceProps()}
         >
-          <div className="hover:animate-spin-slow">
+          <div className="group-hover:animate-spin-slow">
             <fa6.FaGear size="1.5rem" />
           </div>
         </button>
       </HoverTooltip>
-      {settingsOpen && (
+
+      {isMounted && (
         <FloatingPortal>
           <div
             className={[
-              // "w-max",
               "z-40",
               "space-y-1",
-              "bg-egg-300 dark:bg-mixed-20",
+              "bg-egg-300 dark:bg-mixed-40",
               "p-2",
-              "border-egg-400 dark:border-mixed-40",
+              "border-egg-400 dark:border-mixed-60",
               "border-[1px]",
               "rounded-md",
               "drop-shadow-md",
+              // "transition-opacity",
+              // "transition-transform",
+              // settingsOpen && "animate-slide-down",
+              // !settingsOpen && "pointer-events-none",
+              // settingsOpen ? "opacity-100" : "opacity-0",
             ].join(" ")}
             ref={refs.setFloating}
-            style={floatingStyles}
+            style={{
+              ...floatingStyles,
+              ...styles,
+            }}
             {...getFloatingProps()}
           >
             {body}
