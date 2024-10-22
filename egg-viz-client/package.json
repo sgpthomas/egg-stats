@@ -11,6 +11,7 @@
     "color-convert": "^2.0.1",
     "d3": "^7.9.0",
     "framer-motion": "^11.11.0",
+    "google-palette": "^1.1.1",
     "idb-keyval": "^6.2.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

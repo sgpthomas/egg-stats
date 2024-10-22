@@ -1,4 +1,3 @@
-import * as d3 from "d3";
 import * as fa6 from "react-icons/fa6";
 import * as convert from "color-convert";
 import {
@@ -18,6 +17,7 @@ import { IoRemoveOutline } from "react-icons/io5";
 import { HoverTooltip } from "./hooks";
 import { ServerConfigContext } from "../../ServerContext";
 import { queryClient } from "./App";
+import { useColors } from "./colors";
 
 function CollapseDiv({
   expanded,
@@ -244,7 +244,6 @@ function FileItem({
   onSelect,
   open,
   selected,
-  colors,
   onRule,
 }: {
   path: string;
@@ -253,10 +252,10 @@ function FileItem({
   onSelect: (id: number) => void;
   open: boolean;
   selected: Set<number>;
-  colors: readonly string[];
   onRule: (rule: string | null) => void;
 }) {
   const [exp, setExp] = usePersistState<boolean>(false, `file-item-${id}`);
+  const colors = useColors();
 
   return (
     <>
@@ -295,10 +294,10 @@ function FileItem({
               />
               <div
                 style={{
-                  background: selected.has(id) ? colors[id] : undefined,
+                  background: selected.has(id) ? colors(id) : undefined,
                   borderColor: selected.has(id)
-                    ? darkenColor(colors[id])
-                    : colors[id],
+                    ? darkenColor(colors(id))
+                    : colors(id),
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -332,10 +331,10 @@ function FileItem({
                   <PiWaveSineBold
                     className="absolute top-[1px] z-10"
                     size="15px"
-                    color={darkenColor(colors[id], 2.0)}
+                    color={darkenColor(colors(id), 2.0)}
                   />
                 ) : (
-                  <IoRemoveOutline color={colors[id]} />
+                  <IoRemoveOutline color={colors(id)} />
                 )}
               </div>
 
@@ -400,13 +399,11 @@ export function FileList({
   onSelect,
   open,
   selected,
-  colors = d3.schemeAccent,
   onRuleChange = (_i, _r) => {},
 }: {
   onSelect: (id: number) => void;
   open: boolean;
   selected: Set<number>;
-  colors?: readonly string[];
   onRuleChange?: (id: number, rule: string | null) => void;
 }) {
   const knownFiles = useKnownFiles();
@@ -487,7 +484,6 @@ export function FileList({
           onSelect={onSelect}
           open={open}
           selected={selected}
-          colors={colors}
           onRule={(rule) => onRuleChange(id, rule)}
         />
       ))}

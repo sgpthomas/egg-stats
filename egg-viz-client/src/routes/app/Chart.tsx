@@ -29,6 +29,7 @@ import {
 } from "./ChartOptions";
 import { lowerBound, roundUpperBound } from "./ChartControls";
 import { UseQueryResult } from "@tanstack/react-query";
+import { useColors } from "./colors";
 
 export interface Point<T = number> {
   x: T;
@@ -140,18 +141,17 @@ function DataPointSvg({
 const Points = memo(function Points({
   columns,
   scales,
-  colors,
   selected,
   setTooltip,
   selectedRules,
 }: {
   columns: Point<string>;
   scales: Point<d3Scale>;
-  colors: readonly string[];
   selected: Set<number>;
   setTooltip: (tooltip?: Tooltip) => void;
   selectedRules: Map<number, string | null>;
 }) {
+  const colors = useColors();
   const query: [number, DataPoint[]][] = useTables({
     select: useCallback(
       (table: PivotTable) => {
@@ -228,7 +228,7 @@ const Points = memo(function Points({
             {data.map((d, ptidx) => (
               <DataPointSvg
                 key={`point-${file_id}-${ptidx}`}
-                fill={colors[file_id]}
+                fill={colors(file_id)}
                 point={{ x: scales.x(d.pt.x), y: scales.y(d.pt.y) }}
                 onHover={onHover(d)}
               />
@@ -240,7 +240,7 @@ const Points = memo(function Points({
             {data.map((d, ptidx) => (
               <DataPointSvg
                 key={`dim-${file_id}-${ptidx}`}
-                fill={colors[file_id]}
+                fill={colors(file_id)}
                 point={{ x: scales.x(d.pt.x), y: scales.y(d.pt.y) }}
                 highlight={true}
               />
@@ -259,7 +259,7 @@ const Points = memo(function Points({
         {data.map((d, ptidx) => (
           <DataPointSvg
             key={`point-${file_id}-${ptidx}`}
-            fill={colors[file_id]}
+            fill={colors(file_id)}
             point={{ x: scales.x(d.pt.x), y: scales.y(d.pt.y) }}
             onHover={onHover(d)}
             selected={true}
@@ -279,18 +279,17 @@ const Points = memo(function Points({
 const Lines = memo(function Lines({
   columns,
   scales,
-  colors,
   selected,
   selectedRules,
   drawLine,
 }: {
   columns: Point<string>;
   scales: Point<d3Scale>;
-  colors: readonly string[];
   selected: Set<number>;
   selectedRules: Map<number, string | null>;
   drawLine: boolean;
 }) {
+  const colors = useColors();
   const highlight = useCallback(
     (pt: DataPoint): boolean => {
       if (pt.id === undefined) return true;
@@ -353,13 +352,13 @@ const Lines = memo(function Lines({
           id,
           <path
             fill="none"
-            stroke={colors[id]}
+            stroke={colors(id)}
             strokeWidth={selectedRules.get(id) !== null ? 1.0 : 2.0}
             d={line(filtered) ?? undefined}
           />,
           <path
             fill="none"
-            stroke={colors[id]}
+            stroke={colors(id)}
             strokeWidth={5.0}
             d={highlightLine(data) ?? undefined}
           />,
@@ -392,12 +391,10 @@ const Lines = memo(function Lines({
 export function Chart({
   selected,
   marginLeft,
-  colors = d3.schemeAccent,
   selectedRules = new Map(),
 }: {
   selected: Set<number>;
   marginLeft: number;
-  colors?: readonly string[];
   selectedRules?: Map<number, string | null>;
 }) {
   const chartSettings: ChartSettings = {
@@ -542,7 +539,6 @@ export function Chart({
             <Lines
               columns={ctrls.columns}
               scales={scales}
-              colors={colors}
               selected={selected}
               selectedRules={selectedRules}
               drawLine={ctrls.drawLine}
@@ -551,7 +547,6 @@ export function Chart({
           <Points
             columns={ctrls.columns}
             scales={scales}
-            colors={colors}
             selected={selected}
             setTooltip={tooltip.set}
             selectedRules={selectedRules}

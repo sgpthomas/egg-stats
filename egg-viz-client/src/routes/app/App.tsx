@@ -8,6 +8,7 @@ import { useMemo } from "react";
 import { ChartControls } from "./ChartControls";
 import * as d3 from "d3";
 import { ChartOptionsProvider } from "./ChartOptions";
+import * as palette from "google-palette";
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,11 +29,6 @@ function Home() {
     (str) => new Set(JSON.parse(str)),
   );
 
-  // const [ctrls, setCtrls] = usePersistState<ChartOptions>(
-  //   new ChartOptions(),
-  //   "chart-options",
-  // );
-
   const [open, setOpen] = usePersistState<boolean>(true, "app-sidebar-state");
 
   const [selectedRules, setSelectedRules] = usePersistState<
@@ -44,16 +40,11 @@ function Home() {
     (str) => new Map(JSON.parse(str)),
   );
 
-  const colors = useMemo(() => [...d3.schemeSet2, ...d3.schemeSet2], []);
-
   const renderedChart = (
     <Chart
       selected={selected}
       marginLeft={open ? 340 : 130}
-      // ctrls={ctrls}
-      // setCtrls={setCtrls}
       selectedRules={selectedRules}
-      colors={colors}
     />
   );
 
@@ -77,14 +68,13 @@ function Home() {
                 selectedRules.set(id, rule);
                 setSelectedRules(new Map(selectedRules));
               }}
-              colors={colors}
             />
           </div>
-          <div>
-            <ChartControls open={open} />
-          </div>
         </Sidebar>
-        <div className="h-screen w-screen fixed">{renderedChart}</div>
+        <ChartControls open={open} />
+        <div id="chart" className="h-screen w-screen fixed">
+          {renderedChart}
+        </div>
       </div>
     </main>
   );
