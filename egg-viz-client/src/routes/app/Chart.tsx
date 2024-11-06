@@ -10,7 +10,7 @@ import React, {
 } from "react";
 import { ChartSettings, useChartDimensions } from "./useChartDimensions";
 import * as d3 from "d3";
-import { PivotTable } from "./DataProcessing";
+import { PivotTable2 } from "./DataProcessing";
 import {
   autoUpdate,
   flip,
@@ -34,6 +34,10 @@ import { useColors } from "./colors";
 export interface Point<T = number> {
   x: T;
   y: T;
+}
+
+function point_dist(p1: Point<number>, p2: Point<number>) {
+  return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
 }
 
 interface DataPoint {
@@ -144,17 +148,19 @@ const Points = memo(function Points({
   selected,
   setTooltip,
   selectedRules,
+  minDist,
 }: {
   columns: Point<string>;
   scales: Point<d3Scale>;
   selected: Set<number>;
   setTooltip: (tooltip?: Tooltip) => void;
   selectedRules: Map<number, string | null>;
+  minDist: number;
 }) {
   const colors = useColors();
   const query: [number, DataPoint[]][] = useTables({
     select: useCallback(
-      (table: PivotTable) => {
+      (table: PivotTable2) => {
         const data = points(table, columns.x, columns.y);
         return [table.file_id, data] as [number, DataPoint[]];
       },
@@ -226,7 +232,7 @@ const Points = memo(function Points({
           ];
         const el = (
           <g key={`point-group-${file_id}`}>
-            {data.map((d, ptidx) => (
+            {filterPoints(data, minDist, scales).map((d, ptidx) => (
               <DataPointSvg
                 key={`point-${file_id}-${ptidx}`}
                 fill={colors(file_id)}
@@ -251,7 +257,7 @@ const Points = memo(function Points({
         return [file_id, el, dimEl] as [number, ReactElement, ReactElement];
       }),
     [],
-    [query, scales.x, scales.y, colors, selected],
+    [query, scales.x, scales.y, colors, selected, minDist],
   );
 
   const highlightedRender = highlightedPoints.map(([file_id, data]) => {
@@ -327,7 +333,7 @@ const Lines = memo(function Lines({
 
   const query: [number, DataPoint[], DataPoint[]][] = useTables({
     select: useCallback(
-      (table: PivotTable) => {
+      (table: PivotTable2) => {
         const data = points(table, columns.x, columns.y);
         const filtered = data.filter((d) => d.pt.x && d.pt.y);
         return [table.file_id, data, filtered] as [
@@ -412,7 +418,7 @@ export function Chart({
 
   const [min, max]: [Point<number>, Point<number>] = useTables({
     select: useCallback(
-      (table: PivotTable) => {
+      (table: PivotTable2) => {
         if (!selected.has(table.file_id))
           return [
             { x: 1, y: 1 },
@@ -549,6 +555,7 @@ export function Chart({
             selected={selected}
             setTooltip={tooltip.set}
             selectedRules={selectedRules}
+            minDist={ctrls.minDist}
           />
         </g>
       </svg>
@@ -557,8 +564,8 @@ export function Chart({
 }
 
 function points(
-  table?: PivotTable,
-  xCol: string = "index",
+  table?: PivotTable2,
+  xCol: string = "enodes",
   yCol: string = "cost",
 ): DataPoint[] {
   if (!table) return [];
@@ -566,15 +573,52 @@ function points(
   const sel = (col: string) => (row: any, idx: number) =>
     col === "index" ? idx : +row[col];
 
+  const colNames = [
+    xCol === "index" ? "" : xCol,
+    yCol == "index" ? "" : yCol,
+  ].filter((x) => x !== "");
+
   const xSel = sel(xCol);
   const ySel = sel(yCol);
 
-  return PivotTable.map(table, (row) => row).map((row, idx) => ({
-    pt: {
-      x: xSel(row, idx),
-      y: ySel(row, idx),
+  let relevantTable = table.data.select(["rule_name", ...colNames]);
+
+  if (colNames.length === 2) {
+    relevantTable = relevantTable.dedupe(colNames);
+  }
+
+  return [...relevantTable].map((data: any, idx) => {
+    return {
+      pt: {
+        x: xSel(data, idx),
+        y: ySel(data, idx),
+      },
+      rule: data["rule_name"],
+      id: table.file_id,
+    };
+  });
+}
+
+function filterPoints(
+  data: DataPoint[],
+  limit: number,
+  scales: Point<d3Scale>,
+) {
+  if (limit <= 0) {
+    return data;
+  }
+
+  const [_, res] = data.reduce(
+    ([d, acc], data) => {
+      const scaled = { x: scales.x(data.pt.x), y: scales.y(data.pt.y) };
+      if (point_dist(d, scaled) > limit) {
+        acc.push(data);
+        return [scaled, acc];
+      } else {
+        return [d, acc];
+      }
     },
-    rule: row.rule_name,
-    id: table.file_id,
-  }));
+    [{ x: Infinity, y: Infinity }, []] as [Point<number>, DataPoint[]],
+  );
+  return res;
 }

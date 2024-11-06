@@ -18,6 +18,7 @@ export class ChartOptions {
   locked: boolean;
   userRange: Point<[number?, number?]>;
   computedRange: Point<[number, number]>;
+  minDist: number;
   darkMode: DarkModeOpts;
 
   constructor(other?: ChartOptions) {
@@ -34,6 +35,7 @@ export class ChartOptions {
       x: [0, 100],
       y: [0, 100],
     };
+    this.minDist = other?.minDist ?? 5;
     this.darkMode = other?.darkMode ?? "system";
   }
 

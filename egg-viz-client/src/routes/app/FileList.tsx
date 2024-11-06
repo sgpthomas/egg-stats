@@ -263,7 +263,7 @@ function FileItem({
             className={[
               "border-[1px]",
               "border-egg-400 dark:border-mixed-40",
-              "hover:bg-egg-400 dark:hover:bg-mixed-40",
+              "hover:bg-egg-325 dark:hover:bg-mixed-40",
               "p-2",
               "rounded-md",
               "w-64",

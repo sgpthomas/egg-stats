@@ -20,7 +20,7 @@ import {
   useState,
 } from "react";
 import { useTables } from "./Fetch";
-import { PivotTable, setIntersect } from "./DataProcessing";
+import { PivotTable2, setIntersect } from "./DataProcessing";
 import { UseQueryResult } from "@tanstack/react-query";
 import { HoverTooltip } from "./hooks";
 import {
@@ -320,7 +320,7 @@ function ChartControlColumns({}: ChartControlProps) {
   const setCtrls = useContext(ChartDispatchContext);
 
   const columnValues = useTables({
-    select: useCallback((table: PivotTable) => table.value_names, []),
+    select: useCallback((table: PivotTable2) => table.value_names, []),
     combine: useCallback(
       (queries: UseQueryResult<string[]>[]) =>
         queries
@@ -462,6 +462,32 @@ function ChartControlScale({}: ChartControlProps) {
   );
 }
 
+function ChartControlMinDist({}: ChartControlProps) {
+  const ctrls = useContext(ChartOptionsContext);
+  const setCtrls = useContext(ChartDispatchContext);
+
+  return (
+    <ChartControlItem>
+      <ChartControlTitle label="Minimum Distance">
+        <fa6.FaPenClip />
+      </ChartControlTitle>
+      <input
+        type="range"
+        min="0"
+        max="50"
+        id="min-dist"
+        name="min-dist"
+        value={ctrls.minDist}
+        onChange={(e) => {
+          ctrls.minDist = e.target.valueAsNumber;
+          setCtrls(new ChartOptions(ctrls));
+        }}
+      />
+      <label htmlFor="min-dist">{ctrls.minDist}</label>
+    </ChartControlItem>
+  );
+}
+
 function ChartControlDrawLine({}: ChartControlProps) {
   const ctrls = useContext(ChartOptionsContext);
   const setCtrls = useContext(ChartDispatchContext);
@@ -509,6 +535,7 @@ export function ChartControls(props: ChartControlProps) {
       {<ChartControlColumns {...props} />}
       {<ChartControlScale {...props} />}
       {<ChartControlDrawLine {...props} />}
+      {<ChartControlMinDist {...props} />}
       {<ChartControlDarkMode {...props} />}
     </>
   );
