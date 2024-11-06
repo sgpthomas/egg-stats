@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 import usePersistState from "./usePersistState";
-import { arraysEqual, ASet, PivotTable, setAdd } from "./DataProcessing";
+import { arraysEqual, ASet, PivotTable2, setAdd } from "./DataProcessing";
 import { useKnownFiles, useTables } from "./Fetch";
 import { UseQueryResult } from "@tanstack/react-query";
 import { PiWaveSineBold } from "react-icons/pi";
@@ -59,24 +59,21 @@ function FileItemLoaded({
   enabled,
   fetching = false,
 }: {
-  table: PivotTable;
+  table: PivotTable2;
   onRule: (rule: string | null) => void;
   enabled: boolean;
   fetching?: boolean;
 }) {
-  // TODO move this into pivot table
   const ruleList: ASet<[string, string]> = useMemo(() => {
     if (!table) return [];
-    const uniqueRules: ASet<[string, string]> = PivotTable.map(
-      table,
-      (row) => row,
-    )
-      .filter((row) => row.when === "before_rewrite")
-      .map((row) => [row.rule_name, row.rule || ""] as [string, string])
-      .reduce((acc: ASet<[string, string]>, el: [string, string]) => {
-        setAdd(acc, el, arraysEqual);
-        return acc;
-      }, []);
+    const uniqueRules: ASet<[string, string]> = [
+      ...table.data
+        .select(["when", "rule_name", "rule"])
+        .filter((d) => d.when === "before_rewrite")
+        .dedupe(),
+    ].map(
+      (row: any) => [row["rule_name"], row["rule"] || ""] as [string, string],
+    );
     return [...uniqueRules];
   }, [table]);
 
@@ -248,7 +245,7 @@ function FileItem({
 }: {
   path: string;
   id: number;
-  table?: UseQueryResult<PivotTable>;
+  table?: UseQueryResult<PivotTable2>;
   onSelect: (id: number) => void;
   open: boolean;
   selected: Set<number>;

@@ -126,17 +126,22 @@ async fn main() {
         .and(with_known_files(known_files.clone()))
         .and_then(available::handler);
 
+    let download_headers = warp::path!("download_headers" / usize)
+        .and(with_known_files(known_files.clone()))
+        .and(with_root(args.clone()))
+        .and_then(download::header_handler);
+
     let download = warp::path!("download" / usize)
         .and(with_known_files(known_files.clone()))
         .and(with_root(args.clone()))
-        .and_then(download::handler);
+        .and_then(download::body_handler);
 
     let ws_route = warp::path!("ws" / usize)
         .and(warp::ws())
         .and(with_known_files(known_files.clone()))
         .and_then(ws::handler);
 
-    let routes = available.or(download).or(ws_route);
+    let routes = available.or(download_headers).or(download).or(ws_route);
 
     #[cfg(not(debug_assertions))]
     {

@@ -1,4 +1,5 @@
 import * as d3 from "d3";
+import * as aq from "arquero";
 
 export type Datum = number | string;
 export type Key = string[];
@@ -73,6 +74,22 @@ export function mkObject(keys: string[], values: any[]) {
   return obj;
 }
 
+export class PivotTable2 {
+  file_id: number;
+  value_names: string[];
+  data: aq.ColumnTable;
+
+  constructor(file_id: number, parsed: aq.ColumnTable) {
+    this.file_id = file_id;
+    this.value_names = parsed.select("name").dedupe().array("name") as string[];
+    this.data = parsed
+      .groupby(
+        parsed.columnNames().filter((n) => n !== "name" && n !== "value"),
+      )
+      .pivot("name", "value");
+  }
+}
+
 export class PivotTable {
   file_id: number;
 
@@ -117,7 +134,6 @@ export class PivotTable {
         return;
       }
     }
-
     // no row has been found
     let new_val: any = {};
     new_val[row[table.name]] = row[table.value];

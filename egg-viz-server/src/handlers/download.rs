@@ -10,13 +10,12 @@ use crate::KnownFiles;
 type Row = Vec<String>;
 
 #[derive(serde::Serialize, Debug)]
-pub struct FileResponse {
+pub struct HeaderResponse {
     path: PathBuf,
     headers: Vec<String>,
-    rows: Vec<Row>,
 }
 
-pub async fn handler(
+pub async fn header_handler(
     file_id: usize,
     known_files: KnownFiles,
     root: PathBuf,
@@ -32,8 +31,6 @@ pub async fn handler(
         .from_path(root.join(&path))
         .map_err(|_| reject::not_found())?;
 
-    let rows = rdr.deserialize::<Row>().flatten().collect::<Vec<_>>();
-
     let headers: Vec<String> = rdr
         .headers()
         .map_err(|_| reject::reject())?
@@ -41,9 +38,32 @@ pub async fn handler(
         .map(|s| s.to_string())
         .collect();
 
-    Ok(json(&FileResponse {
-        path,
-        headers,
-        rows,
-    }))
+    let response = HeaderResponse { path, headers };
+
+    Ok(json(&response))
+}
+
+pub async fn body_handler(
+    file_id: usize,
+    known_files: KnownFiles,
+    root: PathBuf,
+) -> Result<impl Reply, Rejection> {
+    let path = known_files
+        .get_path(file_id)
+        .map_err(|_| reject::not_found())?
+        .clone();
+
+    let mut rdr = csv::ReaderBuilder::new()
+        .has_headers(true)
+        .delimiter(b',')
+        .from_path(root.join(&path))
+        .map_err(|_| reject::not_found())?;
+
+    let rows = rdr
+        .deserialize::<Row>()
+        .flatten()
+        .map(|row| row.join(","))
+        .collect::<Vec<_>>();
+
+    Ok(rows.join("\n"))
 }

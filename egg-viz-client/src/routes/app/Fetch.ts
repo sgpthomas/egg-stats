@@ -1,7 +1,8 @@
 import { useQueries, useQuery, UseQueryResult } from "@tanstack/react-query";
-import { PivotTable } from "./DataProcessing";
+import { PivotTable2 } from "./DataProcessing";
 import { useCallback, useContext } from "react";
 import { ServerConfigContext } from "../../ServerContext";
+import * as aq from "arquero";
 
 export interface AvailableResponse {
   paths: [number, string][];
@@ -36,27 +37,33 @@ export interface DownloadResponse {
   rows: string[][];
 }
 
-async function fetchFileId(port: string, file_id: number): Promise<PivotTable> {
-  return fetch(`http://localhost:${port}/download/${file_id}`)
-    .then(throwResponseError)
-    .then((res) => res.json())
-    .then((data: DownloadResponse) => {
-      const table = new PivotTable(file_id, data.headers, "name", "value");
-      PivotTable.addRows(table, data.rows);
-      return table;
-    });
+async function fetchFileId(
+  port: string,
+  file_id: number,
+): Promise<PivotTable2> {
+  const headers = await fetch(
+    `http://localhost:${port}/download_headers/${file_id}`,
+  ).then((res) => res.json());
+
+  return new PivotTable2(
+    file_id,
+    await aq.loadCSV(`http://localhost:${port}/download/${file_id}`, {
+      header: false,
+      names: headers.headers,
+    }),
+  );
 }
 
 export function useTables<
-  T = PivotTable,
-  U = UseQueryResult<unknown extends T ? PivotTable : T>[],
+  T = PivotTable2,
+  U = UseQueryResult<unknown extends T ? PivotTable2 : T>[],
 >({
   select,
   combine,
 }: {
-  select?: (table: PivotTable) => T;
+  select?: (table: PivotTable2) => T;
   combine?: (
-    results: UseQueryResult<unknown extends T ? PivotTable : T>[],
+    results: UseQueryResult<unknown extends T ? PivotTable2 : T>[],
   ) => U;
 }): U {
   const { data: fileIds } = useKnownFiles<number[]>(

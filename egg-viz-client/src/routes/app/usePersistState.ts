@@ -1,6 +1,11 @@
-import * as idb from 'idb-keyval' 
-import { PersistedClient, Persister } from "@tanstack/react-query-persist-client";
+import * as idb from "idb-keyval";
+import {
+  PersistedClient,
+  Persister,
+} from "@tanstack/react-query-persist-client";
 import { useEffect, useState } from "react";
+import * as aq from "arquero";
+import { PivotTable2 } from "./DataProcessing";
 
 export default function usePersistState<T>(
   initial_value: T,
@@ -33,16 +38,29 @@ export default function usePersistState<T>(
   return [state, wrapSetState];
 }
 
-export function createIDBPersister(idbValidKey: IDBValidKey = 'reactQuery') {
-  return {    
+export function createIDBPersister(idbValidKey: IDBValidKey = "reactQuery") {
+  return {
     persistClient: async (client: PersistedClient) => {
-      await idb.set(idbValidKey, client)
+      await idb.set(idbValidKey, client);
     },
     restoreClient: async () => {
-      return await idb.get<PersistedClient>(idbValidKey);
+      const client = await idb.get<PersistedClient>(idbValidKey);
+
+      // restore object prototypes for downloads
+      for (const query of client?.clientState.queries ?? []) {
+        if (query.queryKey.length > 0 && query.queryKey[0] === "download") {
+          Object.setPrototypeOf(query.state.data, PivotTable2.prototype);
+          Object.setPrototypeOf(
+            (query.state.data as PivotTable2).data,
+            aq.ColumnTable.prototype,
+          );
+        }
+      }
+
+      return client;
     },
     removeClient: async () => {
-      await idb.del(idbValidKey)
-    }
-  } as Persister
+      await idb.del(idbValidKey);
+    },
+  } as Persister;
 }
