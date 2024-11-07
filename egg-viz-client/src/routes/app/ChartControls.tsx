@@ -469,21 +469,29 @@ function ChartControlMinDist({}: ChartControlProps) {
   return (
     <ChartControlItem>
       <ChartControlTitle label="Minimum Distance">
-        <fa6.FaPenClip />
+        <fa6.FaArrowsLeftRightToLine />
       </ChartControlTitle>
-      <input
-        type="range"
-        min="0"
-        max="50"
-        id="min-dist"
-        name="min-dist"
-        value={ctrls.minDist}
-        onChange={(e) => {
-          ctrls.minDist = e.target.valueAsNumber;
-          setCtrls(new ChartOptions(ctrls));
-        }}
-      />
-      <label htmlFor="min-dist">{ctrls.minDist}</label>
+      <div className="flex gap-x-2">
+        <input
+          type="range"
+          min="0"
+          max="50"
+          id="min-dist"
+          name="min-dist"
+          value={ctrls.minDist}
+          onChange={(e) => {
+            ctrls.minDist = e.target.valueAsNumber;
+            setCtrls(new ChartOptions(ctrls));
+          }}
+          className="accent-egg-500"
+        />
+        <label
+          htmlFor="min-dist"
+          className={["text-black dark:text-white"].join(" ")}
+        >
+          {ctrls.minDist}
+        </label>
+      </div>
     </ChartControlItem>
   );
 }
