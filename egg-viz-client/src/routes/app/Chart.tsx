@@ -455,7 +455,7 @@ export function Chart({
 
   useEffect(() => {
     ctrls.computedRange.x = [min.x, max.x];
-    ctrls.computedRange.y = [min.y, max.y];
+    ctrls.computedRange.y = [1, max.y];
     setCtrls(new ChartOptions(ctrls));
   }, [min, max]);
 
