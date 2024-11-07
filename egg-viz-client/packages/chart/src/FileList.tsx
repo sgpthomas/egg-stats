@@ -1,7 +1,7 @@
 import * as fa6 from "react-icons/fa6";
 import * as convert from "color-convert";
 import {
-  PropsWithChildren,
+  type PropsWithChildren,
   useContext,
   useEffect,
   useMemo,
@@ -9,13 +9,13 @@ import {
   useState,
 } from "react";
 import usePersistState from "./usePersistState";
-import { arraysEqual, ASet, PivotTable2, setAdd } from "./DataProcessing";
+import { type ASet, PivotTable2 } from "./DataProcessing";
 import { useKnownFiles, useTables } from "./Fetch";
-import { UseQueryResult } from "@tanstack/react-query";
+import { type UseQueryResult } from "@tanstack/react-query";
 import { PiWaveSineBold } from "react-icons/pi";
 import { IoRemoveOutline } from "react-icons/io5";
 import { HoverTooltip } from "./hooks";
-import { ServerConfigContext } from "../../ServerContext";
+import { ServerConfigContext } from "./ServerContext";
 import { queryClient } from "./App";
 import { useColors } from "./colors";
 

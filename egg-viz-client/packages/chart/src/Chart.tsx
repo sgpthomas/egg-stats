@@ -1,14 +1,14 @@
 import React, {
   memo,
-  ReactElement,
+  type ReactElement,
   useMemo,
-  MouseEvent,
+  type MouseEvent,
   useState,
   useEffect,
   useCallback,
   useContext,
 } from "react";
-import { ChartSettings, useChartDimensions } from "./useChartDimensions";
+import { type ChartSettings, useChartDimensions } from "./useChartDimensions";
 import * as d3 from "d3";
 import { PivotTable2 } from "./DataProcessing";
 import {
@@ -18,7 +18,7 @@ import {
   shift,
   useFloating,
 } from "@floating-ui/react";
-import { d3Scale, XAxis, YAxis } from "./Axis";
+import { type d3Scale, XAxis, YAxis } from "./Axis";
 import { Grid } from "./Grid";
 import { useTables } from "./Fetch";
 import { useDeferredRender } from "./hooks";
@@ -28,7 +28,7 @@ import {
   ChartOptions,
 } from "./ChartOptions";
 import { lowerBound, roundUpperBound } from "./ChartControls";
-import { UseQueryResult } from "@tanstack/react-query";
+import { type UseQueryResult } from "@tanstack/react-query";
 import { useColors } from "./colors";
 
 export interface Point<T = number> {

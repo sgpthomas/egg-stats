@@ -11,8 +11,8 @@ import {
   useTransitionStyles,
 } from "@floating-ui/react";
 import {
-  ChangeEvent,
-  PropsWithChildren,
+  type ChangeEvent,
+  type PropsWithChildren,
   useCallback,
   useContext,
   useEffect,
@@ -21,13 +21,13 @@ import {
 } from "react";
 import { useTables } from "./Fetch";
 import { PivotTable2, setIntersect } from "./DataProcessing";
-import { UseQueryResult } from "@tanstack/react-query";
+import { type UseQueryResult } from "@tanstack/react-query";
 import { HoverTooltip } from "./hooks";
 import {
   ChartDispatchContext,
   ChartOptions,
   ChartOptionsContext,
-  DarkModeOpts,
+  type DarkModeOpts,
 } from "./ChartOptions";
 
 function ButtonGroup<T>({

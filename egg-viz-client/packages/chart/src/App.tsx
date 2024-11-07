@@ -7,7 +7,7 @@ import { Sidebar } from "./Sidebar";
 import { useContext } from "react";
 import { ChartControls } from "./ChartControls";
 import { ChartOptionsProvider } from "./ChartOptions";
-import { ServerConfigContext } from "../../ServerContext";
+import { ServerConfigContext } from "./ServerContext";
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -79,7 +79,7 @@ function Home() {
   );
 }
 
-export default function App() {
+export function App() {
   const serverConfig = useContext(ServerConfigContext);
   return (
     <ChartOptionsProvider>

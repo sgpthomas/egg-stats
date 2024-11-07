@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { Navigate, useParams } from "react-router-dom";
-import { ServerConfigDispatchContext } from "../ServerContext";
+import { ServerConfigDispatchContext } from "@repo/chart";
 
 export default function Reset() {
   localStorage.clear();

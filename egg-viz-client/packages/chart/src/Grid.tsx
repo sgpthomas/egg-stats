@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { computeTicks, d3Scale } from "./Axis";
+import { computeTicks, type d3Scale } from "./Axis";
 
 export function Grid({
   xScale,

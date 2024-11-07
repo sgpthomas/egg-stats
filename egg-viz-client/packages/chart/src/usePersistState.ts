@@ -1,7 +1,7 @@
 import * as idb from "idb-keyval";
 import {
-  PersistedClient,
-  Persister,
+  type PersistedClient,
+  type Persister,
 } from "@tanstack/react-query-persist-client";
 import { useEffect, useState } from "react";
 import * as aq from "arquero";

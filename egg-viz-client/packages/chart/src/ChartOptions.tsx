@@ -1,11 +1,11 @@
 import {
   createContext,
-  Dispatch,
-  PropsWithChildren,
+  type Dispatch,
+  type PropsWithChildren,
   useEffect,
   useReducer,
 } from "react";
-import { Point } from "./Chart";
+import { type Point } from "./Chart";
 import { useMediaQuery } from "./hooks";
 
 export type DarkModeOpts = "system" | "light" | "dark";

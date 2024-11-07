@@ -1,7 +1,11 @@
-import { useQueries, useQuery, UseQueryResult } from "@tanstack/react-query";
+import {
+  useQueries,
+  useQuery,
+  type UseQueryResult,
+} from "@tanstack/react-query";
 import { PivotTable2 } from "./DataProcessing";
 import { useCallback, useContext } from "react";
-import { ServerConfigContext } from "../../ServerContext";
+import { ServerConfigContext } from "./ServerContext";
 import * as aq from "arquero";
 
 export interface AvailableResponse {
